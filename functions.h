@@ -13,4 +13,6 @@
 
 void printhello(void);
 
+unsigned int letter2segment(char letter);
+
 #endif

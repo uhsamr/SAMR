@@ -10,17 +10,20 @@ int main() {
  //int i = 0;
  //unsigned int pw;
  //int pwgoodl, pwgoodr;
-
-
+ int numberinms;
  init();
 	
-	WriteLed(0x0);
-    usleep( 100*1000 );
+	WriteLed(0x0);//turn all LEDs off.
 	
 	printhello();
 	
+	// wait function where numberinms is how many ms to wait.
+	numberinms = 5000;
+	usleep( numberinms*1000 );	
+	
 	for(;;){//turns on corresponding LED when switch is flipped on.
-	WriteLed(ReadSwitches());}
+	WriteLed(ReadSwitches());
+	}
 	
 return( 0 );
 }

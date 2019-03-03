@@ -22,17 +22,18 @@
 	WriteHex(HEX0,0x18);	P
 	WriteHex(HEX0,0xC);		q
 	WriteHex(HEX0,0x7A);	r
-	WriteHex(HEX0,0x24);	S/5
+	WriteHex(HEX0,0x12);	S/5
 	WriteHex(HEX0,0x70);	t
 	WriteHex(HEX0,0x41);	U
 	WriteHex(HEX0,0x63);	u
 	WriteHex(HEX0,0x44);	y
-	WriteHex(HEX5,0x7F); 	OFF/8
+	WriteHex(HEX5,0x7F); 	OFF
 	WriteHex(HEX5,0x24);	2
 	WriteHex(HEX5,0x30);	3
 	WriteHex(HEX5,0x19);	4
 	WriteHex(HEX5,0x2);		6
 	WriteHex(HEX5,0x7);		7
+	WriteHex(HEX5,0x0);		8	
 	WriteHex(HEX5,0x10);	9
 *****************************************************************/
 
