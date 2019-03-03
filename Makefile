@@ -1,5 +1,5 @@
 #
-TARGET = samr_exe
+TARGET = samr.exe
 
 #
 ALT_DEVICE_FAMILY ?= soc_cv_av
@@ -12,7 +12,7 @@ CC = $(CROSS_COMPILE)gcc
 ARCH= arm
 
 build: $(TARGET)
-$(TARGET): main.o samr_driver.o
+$(TARGET): main.o samr_driver.o functions.o
 	$(CC) $(LDFLAGS)   $^ -o $@  
 %.o : %.c
 	$(CC) $(CFLAGS) -c $< -o $@
