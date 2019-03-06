@@ -91,7 +91,6 @@ int init();
 //*
 //* bit layout 32 -> 0
 //* Return: 0-Good State -1-Failure
-//* 1 = LED_ON, 0 = LED_OFF
 //* ***************************************************************************************************************
 
 int WriteLed(unsigned int value);
@@ -106,7 +105,6 @@ int WriteLed(unsigned int value);
 //* hex: selects HEX0-HEX5, Use HEX0-HEX5 as input values.
 //* value: HEX Segment. Use bits 6-0 of register for HEX Segment control
 //* Return: 0-Good State -1-Init Failure, -2-Invalid Hex
-//* 0 = SEGMENT_ON, 1 = SEGMENT_OFF
 //* ***************************************************************************************************************
 
 int WriteHex(unsigned int hex,unsigned int value);
@@ -119,8 +117,7 @@ int WriteHex(unsigned int hex,unsigned int value);
 //* bit layout 32 -> 0
 //*
 //* source: selects PWM1, PWM2, PWMl, PWMr as input values.
-//* value: Register. Use bit 32 for enable, 15-0 of register for Duty Cycle
-//* to activate PWM, bit 32 must be a 1. 0x80000000 = ‭2147483648‬
+//* value: Register. Use bits 32 for enable, 15-0 of register for Duty Cycle
 //* Return: 0-Good State -1-Init Failure, -2-Invalid Hex
 //* ***************************************************************************************************************
 
@@ -158,7 +155,7 @@ unsigned int ReadKeys();
 //* bit layout 32 -> 0
 //*
 //* source: selects PW0-PM13as input values.
-//* value: Store results in Register.
+//* value: Store results in Register. Value returned in inches
 //* Return: 0-Good State -1-Init Failure, -2-Invalid PW
 //* ***************************************************************************************************************
 

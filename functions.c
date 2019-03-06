@@ -1,6 +1,62 @@
 #include "functions.h"
 #include "samr_driver.h"
 
+
+unsigned int DC(unsigned int duty){
+	duty = 5000 - duty;
+	return duty;
+}
+
+/*flip SW9 up to control left motor, flip SW0 up to control right motor,
+flip SW1 up to stop both motors. Press KEY3 to decrease speed, press 
+KEY2 to increase speed*/
+int pushed = 0;
+unsigned int dutyl = 3800, dutyr = 3800, buttons, switches;//start both duty cycles at off.
+void button_L_R_PWM(void){
+		buttons = ReadKeys();
+		switches = ReadSwitches();
+		if(switches == 0x200){//SW9 up to control left motor
+			if((buttons == 0x7) && (pushed == 0)){//KEY3 increases duty cycle
+				dutyl = dutyl + 100;
+				pushed = 1;
+			}
+			else if((buttons == 0xB) && (pushed == 0)){//KEY2 decreases duty cycle
+				dutyl = dutyl - 100;
+				pushed = 1;
+			}
+			else if(pushed == 1){//if either button was pressed check to see if it was released.
+				if(buttons == 0xF){pushed =0;}
+				else{pushed = 1;}
+			}
+			else{pushed = 0;}//do nothing if no buttons pressed
+			WritePWM(PWMl,ACTIVATE_PWM + dutyl);
+		}
+		else if(switches == 0x1){//SW0 up to control right motor
+			if((buttons == 0x7) && (pushed == 0)){//KEY3 increases duty cycle
+				dutyr = dutyr + 100;
+				pushed = 1;
+			}
+			else if((buttons == 0xB) && (pushed == 0)){//KEY2 decreases duty cycle
+				dutyr = dutyr - 100;
+				pushed = 1;
+			}
+			else if(pushed == 1){//if either button was pressed check to see if it was released.
+				if(buttons == 0xF){pushed =0;}
+				else{pushed = 1;}
+			}
+			else{pushed = 0;}//do nothing if no buttons pressed
+			WritePWM(PWMr,ACTIVATE_PWM + dutyr);
+		}
+		else if(switches == 0x2){//SW1 turns both motors off
+			WritePWM(PWMl,STOP_DUTY);
+			WritePWM(PWMr,STOP_DUTY);
+		}
+		else{//no switches up leave them as is
+			WritePWM(PWMl,ACTIVATE_PWM + dutyl);
+			WritePWM(PWMr,ACTIVATE_PWM + dutyr);
+		}	
+}
+
 void printhello(void){
 	// WriteHex(HEX0,0x9);
 	// WriteHex(HEX1,0x6);
@@ -16,6 +72,51 @@ void printhello(void){
 	WriteHex(HEX5,letter2segment('z'));
 }
 
+void switch_controlled_duty_cycle(void){
+	unsigned int duty;
+	unsigned int switches;
+	switches = ReadSwitches();
+	WriteLed(ReadSwitches());
+	switch(switches){
+		case 0x0:
+		duty = 1;
+		break;
+		case 0x1:
+		duty = 500;
+		break;
+		case 0x2:
+		duty = 1000;
+		break;
+		case 0x4:
+		duty = 1500;
+		break;
+		case 0x8:
+		duty = 2000;
+		break;
+		case 0x10:
+		duty = 2500;
+		break;
+		case 0x20:
+		duty = 3000;
+		break;
+		case 0x40:
+		duty = 3500;
+		break;
+		case 0x80:
+		duty = 4000;
+		break;
+		case 0x100:
+		duty = 4500;
+		break;
+		case 0x200:
+		duty = 4999;//MAX FORWARD DUTY CYCLE 3.2[V] OUTPUT
+		break;
+		default:
+		duty = 0;
+		break;
+	}//end switch statement
+	WritePWM(PWM1,ACTIVATE_PWM + duty);	
+}
 
 unsigned int letter2segment(char letter){
 	unsigned int display;

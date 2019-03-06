@@ -11,8 +11,22 @@
 #include <signal.h>//signal handling
 #include <limits.h>//sizes of basic types
 
+/*		DEFINE GLOBAL VALUES		*/
+#define ACTIVATE_PWM 0x80000000//this is to make bit 31 high to activate PWM.
+#define STOP_DUTY 0x80000ED8//this value gives PWM output of 2.5[V] for motors to be off. 3,800 out of 5,000.
+#define MAX_DUTY 0X80001387//this gives a max output for PWM of 3.2947[V]. 4,999 out of 5,000.
+#define LOW_DUTY 0x80000001//this gives the lowest output for PWM of 1.15[mV].1 out of 5,000.
+
+unsigned int DC(unsigned int duty);
+
+void button_L_R_PWM(void);
+
 void printhello(void);
 
 unsigned int letter2segment(char letter);
+
+void switch_controlled_duty_cycle(void);
+
+
 
 #endif

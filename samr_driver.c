@@ -165,7 +165,7 @@ int WritePWM(unsigned int source,unsigned int value) {
 	  offset = PWMl_ADDR;
 	  break;
 	case PWMr:
-	  offset = PWM2_ADDR;
+	  offset = PWMr_ADDR;
 	  break;
 	default:
 	  return -2;
@@ -240,6 +240,7 @@ int ReadPW(unsigned int pw,unsigned int * value) {
 
 	unsigned int * addr = 0;
 	unsigned int offset = 0;
+	float distance = 0.0;
 
 	if(fd == -1) {
 		return -1;
@@ -298,6 +299,7 @@ int ReadPW(unsigned int pw,unsigned int * value) {
 	}
 
     addr = (unsigned int *) (virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + ONCHIP_MEMORY2_1_BASE+offset ) & ( unsigned long)( HW_REGS_MASK ) ));
- 	*value = *addr;
+    distance = ((float) *(addr)) * .02;
+    *value = ((unsigned int) distance)/147;
  	return 0;
 }

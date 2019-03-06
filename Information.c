@@ -1,4 +1,20 @@
 /****************************************************************
+PWM:
+
+Max output: 3.2947[V] using 4,999/5,000 duty cycle.
+Lowest output: 1.15[mV] using 1/5,000 duty cycle.
+Off output: 2.5[V] using 3,800/5,000 duty cycle.
+
+FORWARD DUTY RANGE: 0-2.49[V] = 0 - 3,799. LOWER NUMBER, FASTER SPEED FORWARD.
+REVERSE DUTY RANGE: 2.51[V] - 3.3[V]. 3,801 - 5,000. HIGHER NUMBER, FASTER SPEED BACKWARDS.
+
+Due to 3.3[V] output limitation, we will reverse duty cycle. 
+Outputs 2.51-3.3[V] will be reverse speed
+and outputs 0-2.49[V] will be forward speed. 
+
+*****************************************************************/
+
+/****************************************************************
 7-SEGMENT DISPLAY LETTERS:
 0000.0000.0000.0000.0000.0000.0XXX.XXXX
 0000.0000.0000.0000.0000.0000.0654.3210
@@ -55,7 +71,7 @@ LEDS:
 0x80 = 00.1000.0000
 0x100 = 01.0000.0000
 0x200 = 10.0000.0000
-0x3FF = 11.1111.1111
+0x3FF = 11.1111.1111//all LEDs ON.
 *****************************************************************/
 
 
@@ -64,12 +80,13 @@ LEDS:
 KEYS:
 0000.0000.0000.0000.0000.0000.0000.XXXX
 0000.0000.0000.0000.0000.0000.0000.3210
-	 
-	0x0 = 00.0000.0000//No buttons pressed
-	0x1 = 00.0000.0001//KEY0 pressed
-	0x2 = 00.0000.0010//KEY1 pressed
-	0x4 = 00.0000.0100//KEY2 pressed
-	0x4 = 00.0000.0100//KEY3 pressed
+Buttons are active low meaning all buttons read 0 when pressed.
+
+	0xF = 00.0000.1111//No buttons pressed
+	0xE = 00.0000.1110//KEY0 pressed
+	0xD = 00.0000.1101//KEY1 pressed
+	0xB = 00.0000.1011//KEY2 pressed
+	0x7 = 00.0000.0111//KEY3 pressed
 *****************************************************************/
 
 
