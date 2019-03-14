@@ -149,7 +149,7 @@ int WritePWM(unsigned int source,unsigned int value) {
 		return -1;
 	}
 
-	if(source > 3) {
+	if(source > PWMr) {
 	  return -2;
 	}
 
@@ -302,4 +302,110 @@ int ReadPW(unsigned int pw,unsigned int * value) {
     distance = ((float) *(addr)) * .02;
     *value = ((unsigned int) distance)/147;
  	return 0;
+}
+
+//*****************************************************************************************************************
+//*  Serial Write
+//*****************************************************************************************************************
+//* Write Data to Serial Port
+//*
+//*
+//* source: selects SER1 or SER2 input values.
+//* data: data to write
+//* Return: 0-Good State -1-Init Failure, -2-Invalid Source
+//* ***************************************************************************************************************
+
+int WriteSerial(unsigned int source,char * data,int sz) {
+
+	unsigned int * addr = 0;
+	unsigned int offset = 0;
+	int i = 0;
+
+	if(fd == -1) {
+		return -1;
+	}
+
+	if(source > SER2) {
+	  return -2;
+	}
+
+	switch (source) {
+
+	case SER1:
+	  offset = RS232_0_BASE;
+	  break;
+	case SER2:
+	  offset = RS232_1_BASE;
+	  break;
+	default:
+	  return -2;
+	}
+
+
+    addr = (unsigned int *) (virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + offset) & ( unsigned long)( HW_REGS_MASK ) ));
+
+    for(i=0; i < sz;i++) {
+
+	 unsigned int reg = *data;
+
+     *addr = reg;
+     data++;
+	}
+
+  return 0;
+
+}
+
+//*****************************************************************************************************************
+//*  Serial Read
+//*****************************************************************************************************************
+//* Read Data from Serial
+//*
+//* Read Byte from Serial Stream
+//* source: selects SER1 or SER2 input values.
+//* Return: 1-New Data  0-No Data
+//* ***************************************************************************************************************
+
+int ReadSerial(unsigned int source,char * data) {
+
+	unsigned int * addr = 0;
+	unsigned int offset = 0;
+
+	if(fd == -1) {
+		return 0;
+	}
+
+	if(source > SER2) {
+	  return 0;
+	}
+
+	switch (source) {
+
+	case SER1:
+	  offset = RS232_0_BASE;
+	  break;
+	case SER2:
+	  offset = RS232_1_BASE;
+	  break;
+	default:
+	  return 0;
+	}
+
+
+    addr = (unsigned int *) (virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + offset) & ( unsigned long)( HW_REGS_MASK ) ));
+
+
+    unsigned int reg = *addr;
+    unsigned int cnt = 0;
+
+    cnt =  reg << 8;
+    cnt = cnt >> 24;
+    if(cnt > 0) {
+	 char * byte = (char *) &reg;
+     data[0] = byte[0];
+
+     return 1;
+	}
+
+  return 0;
 }

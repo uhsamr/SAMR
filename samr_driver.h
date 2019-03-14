@@ -45,6 +45,8 @@
 #define PW11 11
 #define PW12 12
 #define PW13 13
+#define SER1 0
+#define SER2 1
 //Register Addresses
 #define LEDR_ADDR 0x4
 #define HEX0_ADDR 0x8
@@ -160,4 +162,32 @@ unsigned int ReadKeys();
 //* ***************************************************************************************************************
 
 int ReadPW(unsigned int pw,unsigned int * value);
+
+
+//*****************************************************************************************************************
+//*  Serial Write
+//*****************************************************************************************************************
+//* Write Data to Serial Port
+//*
+//*
+//* source: selects SER1 or SER2 input values.
+//* data: data to write
+//* Return: 0-Good State -1-Init Failure, -2-Invalid Source
+//* ***************************************************************************************************************
+
+int WriteSerial(unsigned int source,char * data,int sz);
+
+//*****************************************************************************************************************
+//*  Serial Read
+//*****************************************************************************************************************
+//* Read Data from Serial
+//*
+//* Read Byte from Serial Stream
+//* source: selects SER1 or SER2 input values.
+//* Return: 1-New Data  0-No Data
+//* ***************************************************************************************************************
+
+int ReadSerial(unsigned int source,char * data);
+
+
 #endif

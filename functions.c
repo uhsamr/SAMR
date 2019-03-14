@@ -29,6 +29,9 @@ void button_L_R_PWM(void){
 				else{pushed = 1;}
 			}
 			else{pushed = 0;}//do nothing if no buttons pressed
+			if(dutyl > 5000){dutyl = 5000;}
+			else if(dutyl < 0){dutyl = 0;}
+			else{}
 			WritePWM(PWMl,ACTIVATE_PWM + dutyl);
 		}
 		else if(switches == 0x1){//SW0 up to control right motor
@@ -45,6 +48,9 @@ void button_L_R_PWM(void){
 				else{pushed = 1;}
 			}
 			else{pushed = 0;}//do nothing if no buttons pressed
+			if(dutyr > 5000){dutyr = 5000;}
+			else if(dutyr < 0){dutyr = 0;}
+			else{}
 			WritePWM(PWMr,ACTIVATE_PWM + dutyr);
 		}
 		else if(switches == 0x2){//SW1 turns both motors off

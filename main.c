@@ -5,12 +5,19 @@
 #include "samr_driver.h"
 #include "functions.h"
 
+/****************************************************************************************************************************************
+*********************************RECENT DISCOVERY*********************************
+1. TO GET SENSORS TO WORK MUST DO ALL WIRING BEFORE TURN FPGA ON!!!!!!!!!!!!!!!!!!!!
+2. TURN ON FPGA AND MUST DISCONNECT FEEDBACK THROUGH 1K RESISTOR BEFORE RUNNING EXECUTABLE (DON'T THINK HAVE TO DO THIS)!!!!!!!!!!!!!!!!!!
+3. DOING CHAINING THE BW PIN ON EVERY SONAR SENSOR MUST BE CONNECTED TO +5[V]!!!!!!!!!!!!!!!!!!
+************************************************************************************************************************************/
+
 int main() {
 
  //int i = 0;
  //unsigned int pw;
  //int pwgoodl, pwgoodr;
- int numberinms = 0, pushed = 0;
+ int numberinms = 0, pushed = 0, one = 0, two = 0, three = 0;
  unsigned int ss1, ss2, ss3, ss4, ss5, ss6, ss7, switches, buttons;
  unsigned int dutyl = 3800, dutyr = 3800;//start both duty cycles at off.
 
@@ -28,25 +35,101 @@ int main() {
 	// WriteLed(ReadSwitches());
 	// }
 	
+	WritePWM(PWMl,STOP_DUTY);
+	WritePWM(PWMr,STOP_DUTY);
 	
 	for(;;){
-		button_L_R_PWM();
 		
 		ReadPW(PW0,&ss1);
 		ReadPW(PW1,&ss2);
-		// ReadPW(PW2,&ss3);
-		// ReadPW(PW3,&ss4);
-		// ReadPW(PW4,&ss5);
-		// ReadPW(PW5,&ss6);
-		// ReadPW(PW6,&ss7);
+		ReadPW(PW2,&ss3);
+		ReadPW(PW3,&ss4);
+		ReadPW(PW4,&ss5);
+		ReadPW(PW5,&ss6);
+		ReadPW(PW6,&ss7);
+
+		if((ss1 < 24) && (ss1 > 0)){//if first sonar sensor reads less than 2 feet
+			printf("SS 1: %d [in]\r\n\n",ss1);
+			//WritePWM(PWMl,LOW_DUTY);
+			WriteLed(0x3);
+			one = 0;
+		}//max speed forward
+		else{
+			//WritePWM(PWMl,STOP_DUTY);
+			one = 1;
+		}
 		
-		printf("Sonar Sensor 1: %d [in]\r\n\n",ss1);
-		printf("Sonar Sensor 2: %d [in]\r\n\n",ss2);
-		// printf("Sonar Sensor 3: %d [in]\r\n\n",ss3);
-		// printf("Sonar Sensor 4: %d [in]\r\n\n",ss4);
-		// printf("Sonar Sensor 5: %d [in]\r\n\n",ss5);
-		// printf("Sonar Sensor 6: %d [in]\r\n\n",ss6);
-		// printf("Sonar Sensor 7: %d [in]\r\n\n",ss7);
-	}
+		if((ss2 < 24) && (ss2 > 0)){//if second sonar sensor reads less than 2 feet
+			//WritePWM(PWMr,LOW_DUTY);
+			printf("SS 2: %d [in]\r\n\n",ss2);
+			WriteLed(0x18);
+			two = 0;
+		}//max speed forward
+		else{
+			//WritePWM(PWMr,STOP_DUTY);
+			two = 1;
+		}
+		
+		if((ss3 < 24) && (ss3 > 0)){
+			printf("SS 3: %d [in]\r\n\n",ss3);
+			WriteLed(0x180);
+			three = 0;
+		}
+		else{
+			three = 1;
+		}
+		
+		if((ss4 < 24) && (ss4 > 0)){
+		printf("SS 4: %d [in]\r\n\n",ss4);
+		}
+		else{
+
+		}
+		
+		if((ss5 < 24) && (ss5 > 0)){
+		printf("SS 5: %d [in]\r\n\n",ss5);
+		}
+		else{
+
+		}
+		
+		if((ss6 < 24) && (ss6 > 0)){
+		printf("SS 6: %d [in]\r\n\n",ss6);
+		}
+		else{
+
+		}
+		
+		if((ss7 < 24) && (ss7 > 0)){
+		printf("SS 7: %d [in]\r\n\n",ss7);
+		}
+		else{
+
+		}
+		
+		if((one == 0) || (two == 0) || (three == 0)){}
+		else{WriteLed(0x0);}
+		
+		
+	}//end for(;;)
 return( 0 );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
