@@ -17,7 +17,11 @@
 #define MAX_DUTY 0X80001387//this gives a max output for PWM of 3.2947[V]. 4,999 out of 5,000.
 #define LOW_DUTY 0x80000001//this gives the lowest output for PWM of 1.15[mV].1 out of 5,000.
 
-unsigned int DC(unsigned int duty);
+unsigned int Average_Reading(unsigned int sensor[]);
+
+void Stop_Motors(void);
+
+void Test_All_Sensors(void);
 
 void button_L_R_PWM(void);
 
