@@ -10,6 +10,7 @@
 #include <time.h>//time & date utilities
 #include <signal.h>//signal handling
 #include <limits.h>//sizes of basic types
+#include <stdbool.h>
 
 /*		DEFINE GLOBAL VALUES		*/
 #define ACTIVATE_PWM 0x80000000//this is to make bit 31 high to activate PWM.

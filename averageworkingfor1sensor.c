@@ -19,24 +19,17 @@ int main() {
  //int pwgoodl, pwgoodr;
  int numberinms = 0, pushed = 0, i = 0, j = 0, k = 0;
  unsigned int switches, buttons;
- //these variables save the current value of each sensor
  unsigned int ss1, ss2, ss3, ss4, ss5, ss6, ss7;
- unsigned int sonar1t;
- unsigned int sonar1[100];
- //these save the current value of each sensor to compare to the average for human detection.
  unsigned int ss1t, ss2t, ss3t, ss4t, ss5t, ss6t, ss7t;
- //these are the average variables for each sensor
  unsigned int ss1ave, ss2ave, ss3ave, ss4ave, ss5ave, ss6ave, ss7ave;
- //these are flag variables for each sensor
  int one = 0, two = 0, three = 0, four = 0, five = 0, six = 0, seven = 0;
- //these are arrays of 100 readings to take average and see if person or wall detected.
  unsigned int ss1temp[100], ss2temp[100];
  unsigned int dutyl = 3800, dutyr = 3800;//start both duty cycles at off.
  bool triggered = false;
  
 
  init();
- WriteLed(0x0);//turn all LEDs off.		
+ WriteLed(0x0);//turn all LEDs off.
  printhello();
 	
 	
@@ -45,25 +38,22 @@ int main() {
 		if(triggered == false){
 			
 			
-		for(i = 0; i < 100; ++i){//save 100 readings of sensor in array
-			ReadPW(PW0,&ss1);
-			sonar1[i] = ss1;
-		}
-		sonar1t = Average_Reading(sonar1);//get average of 100 readings	
 			
-		//ReadPW(PW0,&ss1);
+			
+			
+		ReadPW(PW0,&ss1);
 		
 /*If a sensor reads something less than 24 inches away it will set the corresponding
 flag by setting the number sensor it is equal to 1. If a sensor doesnt detect anything
 it will set flag to 0. Flag is active high.*/
 //sensor 1
-		if((sonar1t < 24) && (sonar1t > 0)){//if first sensor less than 2 feet.
+		if((ss1 < 24) && (ss1 > 0)){//if first sensor less than 2 feet.
 			//printf("SS 1: %d [in]\r\n\n",ss1);
 			WriteLed(0x1);
 			one = 1;
 			triggered = true;
 			printf("SS1 has been triggered\n\n");
-			printf("SS 1: %d [in]\r\n\n",sonar1t);
+			printf("SS 1: %d [in]\r\n\n",ss1);
 			ss1t = ss1;//save current value in temp to compare to.
 		}
 		else{
@@ -86,11 +76,14 @@ it will set flag to 0. Flag is active high.*/
 			
 			
 		if(one == 1){
+			// for(i = 0; i < 100; ++i){//save 100 readings of sensor in array
+				// ss1temp[i] = ReadPW(PW0,&ss1);
+			// }
 	
-			if(j < 100){
-				++j;
+			if(i < 100){
+				++i;
 				ReadPW(PW0,&ss1);
-				ss1temp[j] = ss1;
+				ss1temp[i] = ss1;
 				//printf("SS 1: %d [in]\r\n\n",ss1);
 			}
 			else{
@@ -103,7 +96,7 @@ it will set flag to 0. Flag is active high.*/
 				else{/*if the average and trigger values are not same, it is probably a moving person or object
 moving around so stay put and read an array of values again.*/
 					printf("SS1 is detecting a moving object, stay put.\n\n");
-					j = 0;
+					i = 0;
 				}
 			}
 			

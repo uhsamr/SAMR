@@ -25,7 +25,7 @@ and outputs 0-2.49[V] will be forward speed.
     WriteHex(HEX0,0x72);	c
 	WriteHex(HEX0,0x42);	d
 	WriteHex(HEX1,0x6);		E
-	WriteHex(HEX0,0x38);	F
+	WriteHex(HEX0,0x38);	F******************
 	WriteHex(HEX0,0x21);	G
 	WriteHex(HEX0,0x9);		H
 	WriteHex(HEX0,0x68);	h
@@ -35,7 +35,7 @@ and outputs 0-2.49[V] will be forward speed.
 	WriteHex(HEX0,0x6A);	n
 	WriteHex(HEX4,0x40);	O/0
 	WriteHex(HEX0,0x62);	o
-	WriteHex(HEX0,0x18);	P
+	WriteHex(HEX0,0x18);	P***************
 	WriteHex(HEX0,0xC);		q
 	WriteHex(HEX0,0x7A);	r
 	WriteHex(HEX0,0x12);	S/5

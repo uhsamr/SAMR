@@ -3,11 +3,13 @@
 
 //********************************************************************************************************************
 unsigned int Average_Reading(unsigned int sensor[]){
-	int i = 0;
-	unsigned int average;
+	int k = 0;
+	unsigned int average = 0;
 	
-	for(i = 0; i < 100; ++i){
-		average = average + sensor[i];
+	for(k = 0; k < 100; ++k){
+		printf("SS 1: %d [in]\r\n\n",sensor[k]);
+		average = average + sensor[k];
+		sensor[k] = 0;
 	}
 	
 	average = average / 100;
