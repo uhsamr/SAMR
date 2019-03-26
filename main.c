@@ -37,8 +37,8 @@ int main() {
 
  init();
  WriteLed(0x0);//turn all LEDs off.		
- printhello();
-	
+ printroscoe();
+ Stop_Motors();
 	
 	for(;;){
 		
@@ -51,24 +51,26 @@ int main() {
 		}
 		sonar1t = Average_Reading(sonar1);//get average of 100 readings	
 			
-		//ReadPW(PW0,&ss1);
+		// ReadPW(PW0,&ss1);
 		
 /*If a sensor reads something less than 24 inches away it will set the corresponding
 flag by setting the number sensor it is equal to 1. If a sensor doesnt detect anything
 it will set flag to 0. Flag is active high.*/
-//sensor 1
+// sensor 1
 		if((sonar1t < 24) && (sonar1t > 0)){//if first sensor less than 2 feet.
-			//printf("SS 1: %d [in]\r\n\n",ss1);
-			WriteLed(0x1);
-			one = 1;
-			triggered = true;
+			// printf("SS 1: %d [in]\r\n\n",ss1);
+			WriteLed(0x1);//turn on first LED
+			one = 1;//set first sensor flag
+			triggered = true;//turn on triggered loop
 			printf("SS1 has been triggered\n\n");
 			printf("SS 1: %d [in]\r\n\n",sonar1t);
 			ss1t = ss1;//save current value in temp to compare to.
+			Stop_Motors();
 		}
 		else{
 			one = 0;
 			WriteLed(0x0);
+			Forward_Motors();
 		}
 		
 		
@@ -82,9 +84,7 @@ it will set flag to 0. Flag is active high.*/
 		numberinms = 5;
 		usleep( numberinms*1000 );
 			
-			
-			
-			
+	
 		if(one == 1){
 	
 			if(j < 100){

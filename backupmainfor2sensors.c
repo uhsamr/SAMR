@@ -29,19 +29,20 @@ int main() {
 
  init();
  WriteLed(0x0);//turn all LEDs off.
- printhello();
+ printroscoe();
 	
 	
 	for(;;){
 		ReadPW(PW0,&ss1);
 		ReadPW(PW1,&ss2);
+		ReadPW(PW1,&ss3);
 		
 /*If a sensor reads something less than 24 inches away it will set the corresponding
 flag by setting the number sensor it is equal to 1. If a sensor doesnt detect anything
 it will set flag to 0. Flag is active high.*/
 //sensor 1
 		if((ss1 < 24) && (ss1 > 0)){//if first sensor less than 2 feet.
-			//printf("SS 1: %d [in]\r\n\n",ss1);
+			printf("SS 1: %d [in]\r\n\n",ss1);
 			WriteLed(0x1);
 			one = 1;
 		}
@@ -50,67 +51,29 @@ it will set flag to 0. Flag is active high.*/
 		}
 //sensor 2
 		if((ss2 < 24) && (ss2 > 0)){//if second sensor less than 2 feet.
-			//printf("SS 2: %d [in]\r\n\n",ss2);
-			WriteLed(0x200);
+			printf("SS 2: %d [in]\r\n\n",ss2);
+			WriteLed(0x10);
 			two = 1;
 		}
 		else{
 			two = 0;
 		}
+//sensor 3
+		if((ss3 < 24) && (ss3 > 0)){//if first sensor less than 2 feet.
+			printf("SS 3: %d [in]\r\n\n",ss3);
+			WriteLed(0x200);
+			three = 1;
+		}
+		else{
+			three = 0;
+		}
 		
-//if neither sensor reads within 2 feet, turn LEDs off.
-		if((one == 0) || (two == 0)){
+//if no sensor reads within 2 feet, turn LEDs off.
+		if((one == 0) || (two == 0) || (three == 0)){
 			WriteLed(0x0);
 		}
 		else{
 		}
-
-/*If a sensors flag was triggered this will stop the motors, save the current trigger value into a temporary 
-spot and check 100 readings and save them into an array for that sensor, take the average of those readings
-and then compare the average of those 100 readings to the original one that triggered the flag. If the average of 100
-readings is exactly the same as the trigger reading then it is a wall and robot must move, if the average of
-readings is very different than the trigger reading it means that there is a moving object or person
-so the robot must stay still until they move away or after x amount of time move away.*/
-		if(ss1 == 1){
-			printf("SS 1: %d [in]\r\n\n",ss1);
-			Stop_Motors();//stop both motors
-			ss1t = ss1;//save current value in temp to compare to.
-			for(i = 0; i < 100; ++i){//save 100 readings of sensor in array
-				ss1temp[i] = ReadPW(PW0,&ss1);
-			}
-			ss1ave = Average_Reading(ss1temp);//get average of 100 readings
-			if(ss1t == ss1ave){/*if the average is equal to the trigger value, it is probably a wall*/
-				printf("SS1 is detecting a wall, keep moving.");
-			}
-			else{/*if the average and trigger values are not same, it is probably a moving person or object
-moving around so stay put and read an array of values again.*/
-				printf("SS1 is detecting a moving object, stay put.");
-			}
-		}
-		else{}
-		
-		if(ss2 == 1){
-			printf("SS 2: %d [in]\r\n\n",ss2);
-			Stop_Motors();//stop both motors
-			ss2t = ss2;//save current value in temp to compare to.
-			for(i = 0; i < 100; ++i){//save 100 readings of sensor in array
-				ss2temp[i] = ReadPW(PW0,&ss2);
-			}
-			ss2ave = Average_Reading(ss2temp);//get average of 100 readings
-			if(ss2t == ss2ave){/*if the average is equal to the trigger value, it is probably a wall*/
-				printf("SS2 is detecting a wall, keep moving.");
-			}
-			else{/*if the average and trigger values are not same, it is probably a moving person or object
-moving around so stay put and read an array of values again.*/
-				printf("SS2 is detecting a moving object, stay put.");
-			}
-			
-		}
-		else{}
-
-
-
-
 
 
 

@@ -15,12 +15,24 @@ unsigned int Average_Reading(unsigned int sensor[]){
 	average = average / 100;
 	return average;
 }
-//********************************************************************************************************************
+/********************************************************************************************************************
+Calling this function will stop both motors.
+*/
 void Stop_Motors(void){
 	WritePWM(PWMl,STOP_DUTY);
 	WritePWM(PWMr,STOP_DUTY);
 }
-//********************************************************************************************************************
+/********************************************************************************************************************
+Calling this function will make both motors go forward at a safe speed.
+*/
+void Forward_Motors(void){
+	WritePWM(PWMl,FORWARD_DUTY);
+	WritePWM(PWMr,FORWARD_DUTY);
+}
+/********************************************************************************************************************
+Calling this function will take all 7 sensor readings and light up the corresponding LED and print out the 
+sensor triggered and the value it read. Sensors triggered if they read withint 24[in].
+*/
 							int one = 0, two = 0, three = 0, four = 0, five = 0, six = 0, seven = 0;
 							unsigned int ss1, ss2, ss3, ss4, ss5, ss6, ss7;
 void Test_All_Sensors(void){
@@ -82,7 +94,7 @@ the reading and light up the corresponding LED.*/
 			WriteLed(0x80);
 			seven = 0;}
 		else{seven = 1;}
-		
+		//if all trigger flags == 1 then turn off all LEDs and do not print anything.
 		if((one == 0) || (two == 0) || (three == 0) || (four == 0) || (five == 0) || (six == 0) || (seven == 0)){}
 		else{WriteLed(0x0);}
 }
@@ -201,11 +213,11 @@ unsigned int letter2segment(char letter){
 		break;
 		
 		case 'C':
-			display = 0x61;
+			display = 0x46;
 		break;
 		
 		case 'c':
-			display = 0x72;
+			display = 0x27;
 		break;
 		
 		case 'd':
@@ -265,7 +277,7 @@ unsigned int letter2segment(char letter){
 		break;
 		
 		case 'r':
-			display = 0x7A;		
+			display = 0x2F;		
 		break;
 		
 		case 'S':
@@ -356,6 +368,22 @@ void printhello(void){
 	WriteHex(HEX4,letter2segment('O'));
 	WriteHex(HEX5,letter2segment('z'));
 }
+//********************************************************************************************************************
+void printroscoe(void){
+	// WriteHex(HEX0,0x9);
+	// WriteHex(HEX1,0x6);
+	// WriteHex(HEX2,0x47);
+	// WriteHex(HEX3,0x47);
+	// WriteHex(HEX4,0x40);
+	// WriteHex(HEX5,0x7F);
+	WriteHex(HEX0,letter2segment('r'));
+	WriteHex(HEX1,letter2segment('O'));
+	WriteHex(HEX2,letter2segment('S'));
+	WriteHex(HEX3,letter2segment('C'));
+	WriteHex(HEX4,letter2segment('O'));
+	WriteHex(HEX5,letter2segment('E'));
+}
+
 //********************************************************************************************************************
 
 
