@@ -25,17 +25,12 @@ void Stop_Motors(void);
 
 void Forward_Motors(void);
 
-void Test_All_Sensors(void);
-
-void button_L_R_PWM(void);
-
 void printhello(void);
 
 void printroscoe(void);
 
 unsigned int letter2segment(char letter);
 
-void switch_controlled_duty_cycle(void);
 
 
 
