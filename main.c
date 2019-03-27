@@ -21,11 +21,11 @@
  unsigned int ss1wall = 1, ss2wall = 1, ss3wall = 1, ss4wall = 1, ss5wall = 1, ss6wall = 1, ss7wall = 1;
  //trigger variable if sensor detected a person (active low)
  unsigned int ss1person = 1, ss2person = 1, ss3person = 1, ss4person = 1, ss5person = 1, ss6person = 1, ss7person = 1;
- //these variables are used to save the temp sensor reading to check if it was triggered or not
+ //These variables save the current sensor average values and are used to check if anything was detected.
  unsigned int sonar1t, sonar2t, sonar3t, sonar4t, sonar5t, sonar6t, sonar7t;
  //these are arrays used to take average of readings of sensors for more accurate reading.
  unsigned int sonar1[100], sonar2[100], sonar3[100], sonar4[100], sonar5[100], sonar6[100], sonar7[100];
- //these save the triggered value of each sensor to compare to the average for human detection.
+ //If a sensor detected something its triggered value will be saved in this temp variable for comparison.
  unsigned int ss1t, ss2t, ss3t, ss4t, ss5t, ss6t, ss7t;
  //these are the average variables for each sensor
  unsigned int ss1ave, ss2ave, ss3ave, ss4ave, ss5ave, ss6ave, ss7ave;
@@ -35,6 +35,7 @@
  unsigned int ss1temp[100], ss2temp[100];
  unsigned int dutyl = 3800, dutyr = 3800;//start both duty cycles at off.
  bool triggered = false;
+ bool walldetected = false;
 /********************************END GLOBAL VARIABLE DECLARATIONS********************************/
 
 /*************************************FUNCTION DECLARATIONS*************************************/
@@ -66,15 +67,38 @@ int main() {
 	 Stop_Motors();
 	
 	for(;;){
+		/*This function sets all sonar#t to the current value the sensors are reading*/
 		read_all_sensors();
+		/*This function takes all "sonar#t" values and checks to see if they detected anything within their
+		range, if so it sets that sensors flag and saves the "sonar#t" value to a "sonar#t" variable. If sonar1t 
+		detected something then ss1t saves sonar1t value and the flag "one" will be set to 0 becuase the flags 
+		are active low. This will also set the triggered flag to true if ANY sensor flag is set.*/
 		check_if_anything_detected();
 
 			
-			if(triggered == true){
-				read_all_sensors_triggered();
-				determine_wall_or_human();
+		if(triggered == true){
+			/*This function will take an array of reading for only triggered sensors and save the average of the
+			array into sonar#t for comparison to the temp value ss#t, which holds the initial triggered sensor reading.*/
+			read_all_sensors_triggered();
+			/*This function will take the newest "sonar#t" value and compare it to the "ss#t" value ONLY for sensors
+			whose trigger flags were set (one, two etc.) and set the wall flag "ss#wall" or the person flag "ss#person"
+			depending on the values of the newest sensor reading (sonar#t) and the original triggered reading (ss#t).*/
+			determine_wall_or_human();
+			if(walldetected == true){
+				if(ss1wall == 0){/*If sensor 1 wall flag is set*/
+					
+				}
+				
 			}
-			else{}
+			else{/*if no wall detected then a human was detected. Wait 5-10 seconds and restart checking all sensors again
+			This is because if it was maybe someone passing or a glitch reading then the sensors will read and they will
+			not detect the glitch again. If it was a person and the person is still there then the sensor reading the person
+			will trigger again, it will determine if wall or person and if person still then it will wait even longer and repeat this.*/
+				numberinms = 5000;
+				usleep( numberinms*1000 );
+			}
+		}
+		else{}
 	
 
 		
@@ -83,13 +107,7 @@ int main() {
 return(0);}
 /***************************************END MAIN FUNCTION***************************************/
 
-/*********************************************************************************************************************/
-void check_if_clear_of_wall(void){
-	
-	
-	
-	
-}
+
 /*********************************************************************************************************************/
 void read_all_sensors(void){
 		 //The loop delays 2ms and runs 100 times so take 200ms to get readings.
@@ -239,6 +257,9 @@ void read_all_sensors_triggered(void){
 			numberinms = 2;
 			usleep( numberinms*1000 );
 		}
+		/*Can take average of all sonars again because if a sensors flag was not 
+		triggered than its array will not be over written, therefore the sonar#t
+		average will end up being the same still*/
 			sonar1t = Average_Reading(sonar1);//get average of 100 readings	
 			sonar2t = Average_Reading(sonar2);//get average of 100 readings	
 			sonar3t = Average_Reading(sonar3);//get average of 100 readings	
@@ -250,85 +271,111 @@ void read_all_sensors_triggered(void){
 }
 /*********************************************************************************************************************/
 void determine_wall_or_human(void){
-/*ss1t = value that triggered. sonar1t = newest average sensor reading.
+/*
+ss1t = value that triggered. sonar1t = newest average sensor reading.
 if new average (sonar#t) is equal to the triggered value (ss#t) then wall.
 if they are not it is a human.
 
-						trigger variable if sensor detected a wall
+- trigger variable if sensor detected a wall (active low = 0)
 unsigned int ss1wall = 1, ss2wall = 1, ss3wall = 1, ss4wall = 1, ss5wall = 1, ss6wall = 1, ss7wall = 1;
-						trigger variable if sensor detected a person.
+- trigger variable if sensor detected a person (active low = 0)
 unsigned int ss1person = 1, ss2person = 1, ss3person = 1, ss4person = 1, ss5person = 1, ss6person = 1, ss7person = 1;
 */
 //sensor 1
+if(one == 0){
 				if(ss1t == sonar1t){//wall detected
-					ss1wall = 0;//active low
+					ss1wall = 0;
 					ss1person = 1;
 				}
 				else{//object detected
-					ss1wall = 1;//active low
+					ss1wall = 1;
 					ss1person = 0;
 				}
+}
 //sensor 2
+if(two == 0){
 				if(ss2t == sonar2t){
 					ss2wall = 0;//active low
 					ss2person = 1;
 				}
 				else{
-					ss2wall = 1;//active low
+					ss2wall = 1;
 					ss2person = 0;
 				}
+}
 //sensor 3
+if(three == 0){
 				if(ss3t == sonar3t){
-					ss3wall = 0;//active low
+					ss3wall = 0;
 					ss3person = 1;
 				}
 				else{
-					ss3wall = 1;//active low
+					ss3wall = 1;
 					ss3person = 0;
 				}
+}
 //sensor 4
+if(four == 0){
 				if(ss4t == sonar4t){
-					ss4wall = 0;//active low
+					ss4wall = 0;
 					ss4person = 1;
 				}
 				else{
-					ss4wall = 1;//active low
+					ss4wall = 1;
 					ss4person = 0;
 				}
+}
 //sensor 5
+if(five == 0){
 				if(ss5t == sonar5t){
-					ss5wall = 0;//active low
+					ss5wall = 0;
 					ss5person = 1;
 				}
 				else{
-					ss5wall = 1;//active low
+					ss5wall = 1;
 					ss5person = 0;
 				}
+}
 //sensor 6
+if(six == 0){
 				if(ss6t == sonar6t){
-					ss6wall = 0;//active low
+					ss6wall = 0;
 					ss6person = 1;
 				}
 				else{
-					ss6wall = 1;//active low
+					ss6wall = 1;
 					ss6person = 0;
 				}
+}
 //sensor 7
+if(seven == 0){
 				if(ss7t == sonar7t){
-					ss7wall = 0;//active low
+					ss7wall = 0;
 					ss7person = 1;
 				}
 				else{
-					ss7wall = 1;//active low
+					ss7wall = 1;
 					ss7person = 0;
 				}
 }
 
+//if a wall was detected by any sensor then set the walldetected flag to true.
+		if((ss1wall == 0) || (ss2wall == 0) || (ss3wall == 0) || (ss4wall == 0) || (ss5wall == 0) || (ss6wall == 0) || (ss7wall == 0)){
+			walldetected = true;}
+		else{
+			walldetected = false;}
+}
+/*********************************************************************************************************************/
+void check_if_clear_of_wall(void){
+	
+	
+	
+	
+}
 /********************************************************************************************************************
 Calling this function will take all 7 sensor readings and light up the corresponding LED and print out the 
 sensor triggered and the value it read. Sensors triggered if they read withint 24[in].
-*/
-
+********************************************************************************************************************/
 void Test_All_Sensors(void){
 /*call this in a for(;;) loops to constantly check if any of the sensors
 read something within 24 inches, if they do it will print which sensor,
@@ -392,12 +439,10 @@ the reading and light up the corresponding LED.*/
 		if((one == 0) || (two == 0) || (three == 0) || (four == 0) || (five == 0) || (six == 0) || (seven == 0)){}
 		else{WriteLed(0x0);}
 }
-
 /********************************************************************************************************************
 Calling this function will take all 7 sensor readings and light up the corresponding LED and print out the 
 sensor triggered and the value it read. Sensors triggered if they read withint 24[in].
-*/
-
+********************************************************************************************************************/
 void Test_All_Sensors_Arrays(void){
 /*call this in a for(;;) loops to constantly check if any of the sensors
 read something within 24 inches, if they do it will print which sensor,
@@ -512,9 +557,7 @@ it will set flag to 0. Flag is active high.*/
 			WriteLed(0x0);}
 
 }
-
-//********************************************************************************************************************
-
+/*********************************************************************************************************************/
 void button_L_R_PWM(void){
 /*flip SW9 up to control left motor, flip SW0 up to control right motor,
 flip SW1 up to stop both motors. Press KEY3 to decrease speed, press 
@@ -568,9 +611,7 @@ KEY2 to increase speed*/
 			WritePWM(PWMr,ACTIVATE_PWM + dutyr);
 		}	
 }
-
-//********************************************************************************************************************
-
+/*********************************************************************************************************************/
 void switch_controlled_duty_cycle(void){
 	unsigned int duty;
 	unsigned int switches;
@@ -616,10 +657,7 @@ void switch_controlled_duty_cycle(void){
 	}//end switch statement
 	WritePWM(PWM1,ACTIVATE_PWM + duty);	
 }
-
-//********************************************************************************************************************
-
-
+/*********************************************************************************************************************/
 
 
 /*
