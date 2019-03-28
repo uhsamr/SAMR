@@ -51,11 +51,15 @@ void read_all_sensors(void);
 
 void read_all_sensors_triggered(void);
 
-void check_if_clear_of_wall(void);
-
 void check_if_anything_detected(void);
 
 void determine_wall_or_human(void);
+
+void turn_right(void);
+
+void turn_left(void);
+
+void determine_if_wall_avoided(void);
 /***********************************END FUNCTION DECLARATIONS***********************************/
  
 /**************************************START MAIN FUNCTION**************************************/
@@ -76,7 +80,7 @@ int main() {
 		check_if_anything_detected();
 
 			
-		if(triggered == true){
+		while(triggered == true){
 			/*This function will take an array of reading for only triggered sensors and save the average of the
 			array into sonar#t for comparison to the temp value ss#t, which holds the initial triggered sensor reading.*/
 			read_all_sensors_triggered();
@@ -85,22 +89,35 @@ int main() {
 			depending on the values of the newest sensor reading (sonar#t) and the original triggered reading (ss#t).*/
 			determine_wall_or_human();
 			if(walldetected == true){
-				if(ss1wall == 0){/*If sensor 1 wall flag is set*/
-					
-				}
 				
-			}
+				while(ss1wall == 0){/*While sensor 1 wall flag is set*/
+					/*This function make left motor start going forward and right motor start going backwards. Each time the code
+					runs through this loop the speed of the motors in those directions will increase by 50 until they reach their 
+					max speed. This means roughly every 200[ms] (how long it takes to read sensors) the motors will increase in 
+					speed until it avoided the wall.*/
+					turn_right();
+					read_all_sensors_triggered();
+					/*This function takes the new sonar#t number and checks to see if it is still within the triggering range of that sensor.
+					If it is then the ss#wall flag remains triggered, if it is not it will change the flag to 1 (off). If the sensor is no 
+					longer reading in range then the ss#wall going 1 will break the while loop and the code will restart and check sensor again.
+					If the sensor is still in range then ss#wall stays 0 and the motors turning speed increases and all sensors are read again
+					to determine if sensor reading something in range still.*/
+					determine_if_wall_avoided();
+				}//end if ss1 detected wall
+				
+			}//end if walldetected
 			else{/*if no wall detected then a human was detected. Wait 5-10 seconds and restart checking all sensors again
 			This is because if it was maybe someone passing or a glitch reading then the sensors will read and they will
 			not detect the glitch again. If it was a person and the person is still there then the sensor reading the person
 			will trigger again, it will determine if wall or person and if person still then it will wait even longer and repeat this.*/
+				Stop_Motors();
+				dutyl = 3800;
+				dutyr = 3800;
 				numberinms = 5000;
 				usleep( numberinms*1000 );
-			}
-		}
-		else{}
-	
-
+				triggered = false;
+			}//end else human detected
+		}//end while
 		
 	}//end for(;;)
 
@@ -214,6 +231,8 @@ it will set flag to 0. Flag is active high.*/
 //if all trigger flags == 1 (nothing was detected) then turn off all LEDs and do not print anything.
 		if((one == 0) || (two == 0) || (three == 0) || (four == 0) || (five == 0) || (six == 0) || (seven == 0)){
 			Stop_Motors();
+			dutyl = 3800;
+			dutyr = 3800;
 			triggered = true;}
 		else{
 			Forward_Motors();	
@@ -281,6 +300,7 @@ unsigned int ss1wall = 1, ss2wall = 1, ss3wall = 1, ss4wall = 1, ss5wall = 1, ss
 - trigger variable if sensor detected a person (active low = 0)
 unsigned int ss1person = 1, ss2person = 1, ss3person = 1, ss4person = 1, ss5person = 1, ss6person = 1, ss7person = 1;
 */
+
 //sensor 1
 if(one == 0){
 				if(ss1t == sonar1t){//wall detected
@@ -292,6 +312,10 @@ if(one == 0){
 					ss1person = 0;
 				}
 }
+else{
+	ss1wall = 1;
+	ss1person = 1;
+	}
 //sensor 2
 if(two == 0){
 				if(ss2t == sonar2t){
@@ -303,6 +327,10 @@ if(two == 0){
 					ss2person = 0;
 				}
 }
+else{
+	ss2wall = 1;
+	ss2person = 1;
+	}
 //sensor 3
 if(three == 0){
 				if(ss3t == sonar3t){
@@ -314,6 +342,10 @@ if(three == 0){
 					ss3person = 0;
 				}
 }
+else{
+	ss3wall = 1;
+	ss3person = 1;
+	}
 //sensor 4
 if(four == 0){
 				if(ss4t == sonar4t){
@@ -325,6 +357,10 @@ if(four == 0){
 					ss4person = 0;
 				}
 }
+else{
+	ss4wall = 1;
+	ss4person = 1;
+	}
 //sensor 5
 if(five == 0){
 				if(ss5t == sonar5t){
@@ -336,6 +372,10 @@ if(five == 0){
 					ss5person = 0;
 				}
 }
+else{
+	ss5wall = 1;
+	ss5person = 1;
+	}
 //sensor 6
 if(six == 0){
 				if(ss6t == sonar6t){
@@ -347,6 +387,10 @@ if(six == 0){
 					ss6person = 0;
 				}
 }
+else{
+	ss6wall = 1;
+	ss6person = 1;
+	}
 //sensor 7
 if(seven == 0){
 				if(ss7t == sonar7t){
@@ -358,6 +402,10 @@ if(seven == 0){
 					ss7person = 0;
 				}
 }
+else{
+	ss7wall = 1;
+	ss7person = 1;
+	}
 
 //if a wall was detected by any sensor then set the walldetected flag to true.
 		if((ss1wall == 0) || (ss2wall == 0) || (ss3wall == 0) || (ss4wall == 0) || (ss5wall == 0) || (ss6wall == 0) || (ss7wall == 0)){
@@ -366,9 +414,157 @@ if(seven == 0){
 			walldetected = false;}
 }
 /*********************************************************************************************************************/
-void check_if_clear_of_wall(void){
+void turn_right(void){
+	/*To turn right left motor goes forward. Anything less than 3,800 is forward speed. Max forward speed can be
+	2,600. This means dutyl cannot be less than 2,600.*/
+	if(dutyl < 2600){
+		dutyl = 2600;
+	}
+	else if(dutyl > 3800){
+		dutyl = 3800;
+	}
+	else{
+		dutyl = dutyl - 50;
+	}
 	
+	/*To turn right right motor goes backwards. Anything more than 3,800 is backwards, but max is 4,9999. dutyr must
+	be at least 3,800+*/
+	if(dutyr < 3800){
+		dutyr = 3800;
+	}
+	else if(dutyr > 4999){
+		dutyr = 4999;
+	}
+	else{
+		dutyr = dutyr + 50;
+	}
 	
+	WritePWM(PWMl,ACTIVATE_PWM + dutyl);
+	WritePWM(PWMr,ACTIVATE_PWM + dutyr);
+	
+}
+/*********************************************************************************************************************/
+void turn_left(void){
+	/*To turn left right motor goes forward. Anything less than 3,800 is forward speed. Max forward speed can be
+	2,600. This means dutyr cannot be less than 2,600.*/
+	if(dutyr < 2600){
+		dutyr = 2600;
+	}
+	else if(dutyr > 3800){
+		dutyr = 3800;
+	}
+	else{
+		dutyr = dutyr - 50;
+	}
+	
+	/*To turn left left motor goes backwards. Anything more than 3,800 is backwards, but max is 4,9999. dutyl must
+	be at least 3,800+*/
+	if(dutyl < 3800){
+		dutyl = 3800;
+	}
+	else if(dutyl > 4999){
+		dutyl = 4999;
+	}
+	else{
+		dutyl = dutyl + 50;
+	}
+	
+	WritePWM(PWMl,ACTIVATE_PWM + dutyl);
+	WritePWM(PWMr,ACTIVATE_PWM + dutyr);
+	
+}
+/*********************************************************************************************************************/
+void determine_if_wall_avoided(void){
+/*This function takes the new sonar#t number and checks to see if it is still within the triggering range of that sensor.
+If it is then the ss#wall flag remains triggered, if it is not it will change the flag to 1 (off). If the sensor is no 
+longer reading in range then the ss#wall going 1 will break the while loop and the code will restart and check sensor again.
+If the sensor is still in range then ss#wall stays 0 and the motors turning speed increases and all sensors are read again
+to determine if sensor reading something in range still.*/
+	
+//sensor 1
+if(one == 0){
+				if((sonar1t < 16) && (sonar1t > 0)){
+					ss1wall = 0;//wall not avoided
+				}
+				else{
+					ss1wall = 1;//wall avoided
+				}
+}
+else{
+	ss1wall = 1;
+	}
+//sensor 2
+if(two == 0){
+				if((sonar2t < 24) && (sonar2t > 0)){
+					ss2wall = 0;//active low
+				}
+				else{
+					ss2wall = 1;
+				}
+}
+else{
+	ss2wall = 1;
+	}
+//sensor 3
+if(three == 0){
+				if((sonar3t < 24) && (sonar3t > 0)){
+					ss3wall = 0;
+				}
+				else{
+					ss3wall = 1;
+				}
+}
+else{
+	ss3wall = 1;
+	}
+//sensor 4
+if(four == 0){
+				if((sonar4t < 24) && (sonar4t > 0)){
+					ss4wall = 0;
+				}
+				else{
+					ss4wall = 1;
+				}
+}
+else{
+	ss4wall = 1;
+	}
+//sensor 5
+if(five == 0){
+				if((sonar5t < 24) && (sonar5t > 0)){
+					ss5wall = 0;
+				}
+				else{
+					ss5wall = 1;
+				}
+}
+else{
+	ss5wall = 1;
+	}
+//sensor 6
+if(six == 0){
+				if((sonar6t < 24) && (sonar6t > 0)){
+					ss6wall = 0;
+				}
+				else{
+					ss6wall = 1;
+				}
+}
+else{
+	ss6wall = 1;
+	}
+//sensor 7
+if(seven == 0){
+				if((sonar7t < 16) && (sonar7t > 0)){
+					ss7wall = 0;
+				}
+				else{
+					ss7wall = 1;
+				}
+}
+else{
+	ss7wall = 1;
+	}
 	
 	
 }
