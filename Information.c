@@ -3,6 +3,79 @@ HEX# = bit-6 bit-5 bit-4 bit-3 bit-2 bit-1 bit-0 = 0000000 to turn them all on o
 but that is for binary, so we must write a hex number or decimal equivalent to the binary bits we want
 LED = bit-9 bit-8 bit-7 bit-6 bit-5 bit-4 bit-3 bit-2 bit-1 bit-0 */
 
+
+
+/*************************************SONAR SENSOR OPERATION************************************
+SONAR 1 (Left Corner):
+This sensor will be pointing outward at about a 45 degree angle from the left of the robot. The objects detected
+are not in the direct path of the robot, but still need to be taken into account for and avoided.
+The robot wheel sticks out 6-7[in] from the sensor placement, this sensors trigger range will be
+< 24[in], meaning it will detect anything 17-18[in] from the corner of the robot. When this sensor
+is triggered it will stop the robot and slightly rotate to the right and continue.
+
+SONAR 2 (Left Middle):
+This sensor will be pointing forward directly in front of the robot on the left side. An object 
+detected could be directly in the path, but could also be on the outsite left part of the robot.
+For this reason if only this sensor is triggered we will stop and rotate slightly right.
+
+SONAR 3 (Left Bottom):
+This sensor is pointed at about a 60 degree angle down from the front left of the robot. This allows it
+to see the floor about 24[in] ahead of the robot. This will be used to detect dips in the floor,
+stairs, walls or anything else uneven on the floor that the robot should avoid. To do this the 
+sensor should read a value within a constant range (maybe 20-28[in]) and if the sensor ever reads
+outside this range it means there is a significant change in the floor reading. This sensor will tell
+the robot to stop and rotate right.
+
+SONAR 4 (Middle Middle):
+This is the most important sensor reading, if this sensor detects something it is directly in front
+of the robot and we must analyze and decide if a person is there looking at samr or if the robot
+encountered a wall or non-moving object and must avoid it. This sensor will be reading 24[in]
+ahead.
+
+SONAR 5 (Right Bottom):
+This sensor is pointed at about a 60 degree angle down from the front right of the robot. This allows it
+to see the floor about 24[in] ahead of the robot. This will be used to detect dips in the floor,
+stairs, walls or anything else uneven on the floor that the robot should avoid. To do this the 
+sensor should read a value within a constant range (maybe 20-28[in]) and if the sensor ever reads
+outside this range it means there is a significant change in the floor reading. This sensor will tell
+the robot to stop and rotate left.
+
+SONAR 6 (Right Middle):
+This sensor will be pointing forward directly in front of the robot on the right side. An object 
+detected could be directly in the path, but could also be on the outsite right part of the robot. 
+For this reason if only this sensor is triggered we will stop and rotate slightly left.
+
+SONAR 7 (Right Corner):
+This sensor will be pointing outward at about a 45 degree angle from the right of the robot. The objects detected
+are not in the direct path of the robot, but still need to be taken into account for and avoided.
+The robot wheel sticks out 6-7[in] from the sensor placement, this sensors trigger range will be
+< 24[in], meaning it will detect anything 17-18[in] from the corner of the robot. When this sensor
+is triggered it will stop the robot and slightly rotate to the left and continue.
+
+SONAR 1, 2, 4, 6 & 7:
+- All straight pointing sensors will have a triggering range of < 24[in].
+- If Sonar 4 is ever triggered the algorithm MUST stop, people check and rotate left/right depending
+on other sensors that are triggered.
+- If Sonar 1 and/or 2 are triggered the robot must stop and rotate right until the sensors
+are no longer being triggered.
+- If Sonar 6 and/or 7 are triggered the robot must stop and rotate left until the sensors
+are no longer being triggered.
+- If Sonar 4 and Sonar 6 and/or 7 are triggered the robot must stop, check if person or wall
+detected and act accordingly. Rotate left if a wall.
+- If Sonar 4 and sonar 1 and/or 2 are triggered the robot must stop, check if person or wall
+detected and act accordingly. Rotate right if a wall.
+
+SONAR 3 & 5:
+- All pointing at an angle toward ground in front of robot.
+- Triggering will be if sensor reads outside specified range:
+- If Sonar 3 triggered, stop and rotate right.
+- If Sonar 5 triggered, stop and rotate left.
+
+*************************************SONAR SENSOR OPERATION*************************************/
+
+
+
+
 /****************************************************************
 PWM:
 
