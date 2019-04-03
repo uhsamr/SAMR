@@ -225,66 +225,6 @@ unsigned int ReadKeys() {
 }
 
 //*****************************************************************************************************************
-//*  Read PW
-//*****************************************************************************************************************
-//* Read Number of On Pulses. Provides Pulse Duration. 32 bit register.
-//*
-//* bit layout 32 -> 0
-//*
-//* source: selects PW0-PM06 as input values.
-//* value: Store results in Register.
-//* Return: 0-Good State -1-Init Failure, -2-Invalid PW
-//* ***************************************************************************************************************
-
-int ReadPW(unsigned int pw,unsigned int * value) {
-
-	unsigned int * addr = 0;
-	unsigned int offset = 0;
-	float distance = 0.0;
-
-	if(fd == -1) {
-		return -1;
-	}
-
-	if(pw > PW6) {
-	  return -2;
-	}
-
-	switch (pw) {
-
-	case PW0:
-	  offset = PW0_ADDR;
-	  break;
-	case PW1:
-	  offset = PW1_ADDR;
-	  break;
-	case PW2:
-	  offset = PW2_ADDR;
-	  break;
-	case PW3:
-	  offset = PW3_ADDR;
-	  break;
-	case PW4:
-	  offset = PW4_ADDR;
-	  break;
-	case PW5:
-	  offset = PW5_ADDR;
-	  break;
-	case PW6:
-	  offset = PW6_ADDR;
-	  break;
-	  break;
-	default:
-	  return -2;
-	}
-
-    addr = (unsigned int *) (virtual_base + ( ( unsigned long  )( ALT_LWFPGASLVS_OFST + ONCHIP_MEMORY2_1_BASE+offset ) & ( unsigned long)( HW_REGS_MASK ) ));
-    distance = ((float) *(addr)) * .02;
-    *value = ((unsigned int) distance)/147;
- 	return 0;
-}
-
-//*****************************************************************************************************************
 //*  Serial Write
 //*****************************************************************************************************************
 //* Write Data to Serial Port
@@ -342,7 +282,7 @@ int WriteSerial(unsigned int source,char * data,int sz) {
 //* Read Data from Serial
 //*
 //* Read Byte from Serial Stream
-//* source: selects SER1 or SER2 input values.
+//* source: selects SER1, SER2, or SONAR input values.
 //* Return: 1-New Data  0-No Data
 //* ***************************************************************************************************************
 
@@ -355,7 +295,7 @@ int ReadSerial(unsigned int source,char * data) {
 		return 0;
 	}
 
-	if(source > SER2) {
+	if(source > SONAR) {
 	  return 0;
 	}
 
@@ -366,6 +306,9 @@ int ReadSerial(unsigned int source,char * data) {
 	  break;
 	case SER2:
 	  offset = RS232_1_BASE;
+	  break;
+	case SONAR:
+	  offset = RS232_2_BASE;
 	  break;
 	default:
 	  return 0;
@@ -597,3 +540,4 @@ bool ReadRelatorState(unsigned int *rdata) {
 
 	return true;
 }
+

@@ -31,15 +31,9 @@
 #define PWM2 1
 #define PWMl 2
 #define PWMr 3
-#define PW0 0
-#define PW1 1
-#define PW2 2
-#define PW3 3
-#define PW4 4
-#define PW5 5
-#define PW6 6
 #define SER1 0
 #define SER2 1
+#define SONAR 2
 //Register Addresses
 #define LEDR_ADDR 0x4
 #define HEX0_ADDR 0x8
@@ -54,13 +48,6 @@
 #define PWMr_ADDR 0x2c
 #define SWITCH_ADDR 0x3c
 #define KEY_ADDR 0x40
-#define PW0_ADDR 0x44
-#define PW1_ADDR 0x4c
-#define PW2_ADDR 0x50
-#define PW3_ADDR 0x54
-#define PW4_ADDR 0x58
-#define PW5_ADDR 0x5C
-#define PW6_ADDR 0x60
 
 //*****************************************************************************************************************
 //*  Init
@@ -136,21 +123,6 @@ unsigned int ReadSwitches();
 unsigned int ReadKeys();
 
 //*****************************************************************************************************************
-//*  Read PW
-//*****************************************************************************************************************
-//* Read Number of On Pulses. Provides Pulse Duration. 32 bit register.
-//*
-//* bit layout 32 -> 0
-//*
-//* source: selects PW0-PM06 as input values.
-//* value: Store results in Register. Value returned in inches
-//* Return: 0-Good State -1-Init Failure, -2-Invalid PW
-//* ***************************************************************************************************************
-
-int ReadPW(unsigned int pw,unsigned int * value);
-
-
-//*****************************************************************************************************************
 //*  Serial Write
 //*****************************************************************************************************************
 //* Write Data to Serial Port
@@ -169,7 +141,7 @@ int WriteSerial(unsigned int source,char * data,int sz);
 //* Read Data from Serial
 //*
 //* Read Byte from Serial Stream
-//* source: selects SER1 or SER2 input values.
+//* source: selects SER1, SER2 or SONAR input values.
 //* Return: 1-New Data  0-No Data
 //* ***************************************************************************************************************
 

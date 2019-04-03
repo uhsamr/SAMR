@@ -62,6 +62,10 @@ void determine_if_wall_avoided(void);
 void check_sensor_flags(void);
 
 void avoid_objects(void);
+
+void sensor_4_triggered(void);
+
+void sensor_1_and_7_triggered(void);
 /***********************************************END FUNCTION DECLARATIONS***********************************************/
  
 /**************************************************START MAIN FUNCTION**************************************************/
@@ -82,9 +86,9 @@ int main() {
 		check_if_anything_detected();
 
 			
-		while(triggered == true){
+		if(triggered == true){/*was a while statement, changing to if because code inside should fix triggered.*/
 /*Wait 1[s] after triggered to let sensors steady so if it is a wall they get accurate and similar readings.*/
-			numberinms = 1000;//NOT SURE IF THIS IS GOOD OR NOT
+			numberinms = 500;//NOT SURE IF THIS IS GOOD OR NOT
 			usleep( numberinms*1000 );//NOT SURE IF THIS IS GOOD OR NOT
 			
 			/*This function will take an array of reading for only triggered sensors and save the average of the
@@ -105,86 +109,18 @@ BUT THE SENSORS WERE NOT SETTLED ON THEIR READINGS? read_all_sensors_triggered()
 multiple times and take the most common result? Ex. call this 5 times and if determine_wall_or_human(); determined
 wall 3/5 times then we will set walldetected = true. if determined human 3/5 we will go to human triggered.
 */
-				determine_wall_or_human();
+				determine_wall_or_human();//sets walldetected flag.
 			}//end if humancheck == true
 			else{//if those sensors were not triggered avoid objects.
-				walldetected == false;
 				avoid_objects();
 			}//end else humancheck == false
 			
-			if(walldetected == true){
+			if((walldetected == true) && (humancheck == true)){
 
-				while(ss4wall == 0){/*All of these sensor scenarios will only happen if ss4 detected a wall 
-				also becuase it is the middle sensor and must be triggered in order to check for a person.*/
-					if((ss2wall == 0) && (ss6wall == 0) && (ss7wall == 0)){//line 15
-						turn_left();//starts turning motors left.
-						/*only reads sensors whose flags were set and updates their sonar#t value to be checked again*/
-						read_all_sensors_triggered();
-						/*This takes new sonar#t value of triggered sensors and checks to see if it is within their
-						initial trigger range still.*/
-						determine_if_wall_avoided();
-					}
-					else if((ss1wall == 0) && (ss2wall == 0) && (ss6wall == 0)){//line 16 Sensor Scenarios for SAMR
-						turn_right();
-						read_all_sensors_triggered();
-						determine_if_wall_avoided();
-					}
-					else if((ss6wall == 0) && (ss7wall == 0)){//line 10 Sensor Scenarios for SAMR
-						turn_left();
-						read_all_sensors_triggered();
-						determine_if_wall_avoided();
-					}
-					else if((ss1wall == 0) && (ss2wall == 0)){//line 11 Sensor Scenarios for SAMR
-						turn_right();
-						read_all_sensors_triggered();
-						determine_if_wall_avoided();
-					}
-					else if((ss2wall == 0) && (ss6wall == 0)){//line 14 Sensor Scenarios for SAMR
-						turn_left();
-						read_all_sensors_triggered();
-						determine_if_wall_avoided();
-					}
-					else if((ss1wall == 0) || (ss2wall == 0)){//line 12 Sensor Scenarios for SAMR
-						turn_right();
-						read_all_sensors_triggered();
-						determine_if_wall_avoided();
-					}
-					else if((ss6wall == 0) || (ss7wall == 0)){//line 13 Sensor Scenarios for SAMR
-						turn_left();
-						read_all_sensors_triggered();
-						determine_if_wall_avoided();
-					}
-					else{//else ONLY sensor 4 detected something?
-					}
-					
-				}//end if ss4 detected a wall
+				sensor_4_triggered();
 				
-				/*These scenarios will only happen if ss1 and ss7 detected a wall. This is because
-				if the robot detects something on both sides it needs to be careful going between 
-				them or completely turn around and avoid it.*/
-				while((ss1wall == 0) && (ss7wall == 0)){
-/*
-SHOULD THIS WHILE LOOP INCLUDE SS1 AND SS7 TRIGGERED, IF THE ROBOT TURNS AND EITHER OF THOSE ARE NO LONGER
-TRIGGERED THE ROBOT WILL STOP AVOIDING. SHOULD I MAKE THE WHILE ABOVE AND IF AND THEN BELOW MAKE THE IF STATEMENT
-WHILE LOOPS SO THE SS1 AND SS7 GIVE US THE SITUATION THE ROBOT IS IN AND THE BELOW STATEMENTS WILL TAKE
-THOSE SENSORS INTO ACCOUNT FOR AVOIDING THE WALL??????
-*/
-					if((ss2wall == 0) && (ss6wall == 0)){//line 20 Sensor Scenarios for SAMR
-					
-					}
-					else if((ss2wall == 0)){//line 19 Sensor Scenarios for SAMR
-						
-					}
-					else if((ss6wall == 0)){//line 18 Sensor Scenarios for SAMR
-						
-					}
-					else{//only sensor 1 & 7 detected something?
-					}
-					
-				}//end if ss1 & ss7 detected a wall
-				
-				
-				
+				sensor_1_and_7_triggered();
+	
 				
 //*********************************************************************************************************************
 				// while(ss1wall == 0){/*While sensor 1 wall flag is set*/
@@ -217,7 +153,9 @@ THOSE SENSORS INTO ACCOUNT FOR AVOIDING THE WALL??????
 			else{/*This means human check was not true so the code did not "determine_wall_or_human" so the code will not
 			have walldetected flag set and also should not go through the human detected wait state. This means the code
 			went through the avoiding algorithm.*/}
-		}//end while
+			
+		}//end if triggered == true;
+		else{/*triggered == false*/}
 		
 	}//end for(;;)
 
@@ -245,6 +183,7 @@ void read_all_sensors(void){
 			sonar4[j] = ss4;
 			sonar5[j] = ss5;
 			sonar6[j] = ss6;
+			sonar7[j] = ss7;
 			// wait function where numberinms is how many mili-seconds to wait.
 			numberinms = 2;
 			usleep( numberinms*1000 );
@@ -330,7 +269,7 @@ it will set flag to 0. Flag is active high.*/
 		else{six = 1;
 			flags[5] = 1;}
 //sensor 7 (right corner)
-		if((sonar7t < 16) && (sonar7t > 0)){
+		if((sonar7t < 24) && (sonar7t > 0)){
 			printf("SS 7 triggered: %d [in]\r\n\n",sonar7t);
 			WriteLed(0x80);
 			ss7t = sonar7t;//save current value in temp to compare to.
@@ -339,16 +278,24 @@ it will set flag to 0. Flag is active high.*/
 		else{seven = 1;
 			flags[6] = 1;}
 		
-//if all trigger flags == 1 (nothing was detected) then turn off all LEDs and do not print anything.
-		if((one == 0) || (two == 0) || (three == 0) || (four == 0) || (five == 0) || (six == 0) || (seven == 0)){
+//Check sensor trigger flags
+		/*IF ONLY SENSOR 1 OR SENSOR 7 SET DO NOT STOP OR SET TRIGGERED FLAG*/
+		if(( (one == 0) || (seven == 0) ) && ( (three == 1) && (four == 1) && (five == 1) && (six == 1) && (two == 1) )){
+			Forward_Motors();	
+			WriteLed(0x0);
+			triggered = false;
+		}
+		else if((one == 0) || (two == 0) || (three == 0) || (four == 0) || (five == 0) || (six == 0) || (seven == 0)){
 			Stop_Motors();
 			dutyl = 3800;
 			dutyr = 3800;
-			triggered = true;}
-		else{
+			triggered = true;
+		}
+		else{//if all trigger flags == 1 (nothing was detected) then turn off all LEDs and do not print anything.
 			Forward_Motors();	
 			WriteLed(0x0);
-			triggered = false;}
+			triggered = false;
+		}
 }// END check_if_anything_detected
 
 
@@ -671,7 +618,7 @@ else{
 /************************************************************************/	
 //								SENSOR 3
 if(three == 0){
-				if((sonar3t < 24) && (sonar3t > 0)){
+				if(sonar3t > 26){
 					ss3wall = 0;
 				}
 				else{
@@ -697,7 +644,7 @@ else{
 /************************************************************************/	
 //								SENSOR 5
 if(five == 0){
-				if((sonar5t < 24) && (sonar5t > 0)){
+				if(sonar5t > 26){
 					ss5wall = 0;
 				}
 				else{
@@ -723,7 +670,7 @@ else{
 /************************************************************************/	
 //								SENSOR 7
 if(seven == 0){
-				if((sonar7t < 16) && (sonar7t > 0)){
+				if((sonar7t < 24) && (sonar7t > 0)){
 					ss7wall = 0;
 				}
 				else{
@@ -755,7 +702,7 @@ void check_sensor_flags(void){
 	/*If any other sensors or combination of sensor are triggered then we do not need to check for a person or wall
 	we will go directly to avoiding what was detected. This sets humancheck to false.*/
 	else{
-	humancheck = false;
+		humancheck = false;
 	}
 }
 
@@ -785,10 +732,102 @@ void avoid_objects(void){
 
 
 /********************************************************************************************************************
+This function is called if walldetected and humancheck are both true. It stays in a while loop as long as sensor 4's
+wall trigger is set. It then checks other sensors wall trigger flags to move accordingly. Each run the function makes
+sure sensor 4 wall trigger is still set. Checks other sensors wall trigger flags. Moves motors accordingly. Reads
+all sensors triggered again to update sonar#t values. Determines if the wall is avoided by seeing if new sonar# reading
+is still within the range that triggered it.
+********************************************************************************************************************/
+void sensor_4_triggered(void){
+	
+	while(ss4wall == 0){/*All of these sensor scenarios will only happen if ss4 detected a wall 
+	also becuase it is the middle sensor and must be triggered in order to check for a person.*/
+		if((ss2wall == 0) && (ss6wall == 0) && (ss7wall == 0)){//line 15
+			turn_left();//starts turning motors left.
+			/*only reads sensors whose flags were set and updates their sonar#t value to be checked again*/
+			read_all_sensors_triggered();
+			/*This takes new sonar#t value of triggered sensors and checks to see if it is within their
+			initial trigger range still.*/
+			determine_if_wall_avoided();
+		}
+		else if((ss1wall == 0) && (ss2wall == 0) && (ss6wall == 0)){//line 16 Sensor Scenarios for SAMR
+			turn_right();
+			read_all_sensors_triggered();
+			determine_if_wall_avoided();
+		}
+		else if((ss6wall == 0) && (ss7wall == 0)){//line 10 Sensor Scenarios for SAMR
+			turn_left();
+			read_all_sensors_triggered();
+			determine_if_wall_avoided();
+		}
+		else if((ss1wall == 0) && (ss2wall == 0)){//line 11 Sensor Scenarios for SAMR
+			turn_right();
+			read_all_sensors_triggered();
+			determine_if_wall_avoided();
+		}
+		else if((ss2wall == 0) && (ss6wall == 0)){//line 14 Sensor Scenarios for SAMR
+			turn_left();
+			read_all_sensors_triggered();
+			determine_if_wall_avoided();
+		}
+		else if((ss1wall == 0) || (ss2wall == 0)){//line 12 Sensor Scenarios for SAMR
+			turn_right();
+			read_all_sensors_triggered();
+			determine_if_wall_avoided();
+		}
+		else if((ss6wall == 0) || (ss7wall == 0)){//line 13 Sensor Scenarios for SAMR
+			turn_left();
+			read_all_sensors_triggered();
+			determine_if_wall_avoided();
+		}
+		else{//else ONLY sensor 4 detected something?
+		}
+		
+	}//end while ss4 detects a wall
+	
+}// end sensor_4_triggered
+
+
+/********************************************************************************************************************
 
 
 ********************************************************************************************************************/
-
+void sensor_1_and_7_triggered(void){
+	/*These scenarios will only happen if ss1 and ss7 detected a wall. This is because
+	if the robot detects something on both sides it needs to be careful going between 
+	them or completely turn around and avoid it.*/
+	while((ss1wall == 0) && (ss7wall == 0)){
+		/*TO GET HERE BOTH SS1&SS7 HAD TO BE TRIGGERED, BUT TO AVOID THE 
+	SITUATION I THINK THIS MUST BE OR BECAUSE WHAT IF SS1, SS6 & SS7 WERE TRIGGERED. ROBOT WILL TURN LEFT.
+	THIS MEANS WHAT SS1 READ SS2 MIGHT READ NOW AND WHAT SS6 & SS7 READ ONLY SS7 MIGHT READ SO ONLY SS2 AND 
+	SS7 ARE TRIGGERED, BUT THIS MIGHT NOT BE GOOD TO START GOING FORWARD WITH??????*/
+/*
+SHOULD THIS WHILE LOOP INCLUDE SS1 AND SS7 TRIGGERED, IF THE ROBOT TURNS AND EITHER OF THOSE ARE NO LONGER
+TRIGGERED THE ROBOT WILL STOP AVOIDING. SHOULD I MAKE THE WHILE ABOVE AND IF AND THEN BELOW MAKE THE IF STATEMENT
+WHILE LOOPS SO THE SS1 AND SS7 GIVE US THE SITUATION THE ROBOT IS IN AND THE BELOW STATEMENTS WILL TAKE
+THOSE SENSORS INTO ACCOUNT FOR AVOIDING THE WALL??????
+*/
+		if((ss2wall == 0) && (ss6wall == 0)){//line 20 Sensor Scenarios for SAMR
+			turn_right();
+			read_all_sensors_triggered();
+			determine_if_wall_avoided();
+		}
+		else if((ss2wall == 0)){//line 19 Sensor Scenarios for SAMR
+			turn_right();
+			read_all_sensors_triggered();
+			determine_if_wall_avoided();
+		}
+		else if((ss6wall == 0)){//line 18 Sensor Scenarios for SAMR
+			turn_left();
+			read_all_sensors_triggered();
+			determine_if_wall_avoided();
+		}
+		else{//only sensor 1 & 7 detected something?
+		}
+		
+	}//end if ss1 & ss7 detected a wall	
+	
+}
 
 /********************************************************************************************************************
 Calling this function will take all 7 sensor readings and light up the corresponding LED and print out the 
@@ -1076,96 +1115,3 @@ void switch_controlled_duty_cycle(void){
 	WritePWM(PWM1,ACTIVATE_PWM + duty);	
 }
 /*********************************************************************************************************************/
-
-
-/*
-
-		if(triggered == false){
-			
-			
-		for(i = 0; i < 100; ++i){//save 100 readings of sensor in array
-			ReadPW(PW0,&ss1);
-			sonar1[i] = ss1;
-		}
-		sonar1t = Average_Reading(sonar1);//get average of 100 readings	
-			
-		// ReadPW(PW0,&ss1);
-		
-//If a sensor reads something less than 24 inches away it will set the corresponding
-//flag by setting the number sensor it is equal to 1. If a sensor doesnt detect anything
-//it will set flag to 0. Flag is active high.
-
-
-// sensor 1
-		if((sonar1t < 24) && (sonar1t > 0)){//if first sensor less than 2 feet.
-			// printf("SS 1: %d [in]\r\n\n",ss1);
-			WriteLed(0x1);//turn on first LED
-			one = 1;//set first sensor flag
-			triggered = true;//turn on triggered loop
-			printf("SS1 has been triggered\n\n");
-			printf("SS 1: %d [in]\r\n\n",sonar1t);
-			ss1t = ss1;//save current value in temp to compare to.
-			Stop_Motors();
-		}
-		else{
-			one = 0;
-			WriteLed(0x0);
-			Forward_Motors();
-		}
-		
-		
-		
-		
-		
-		}//end triggered == false
-		else{//if triggered == true meaning a sensor was triggered.
-			
-		// wait function where numberinms is how many ms to wait.
-		numberinms = 5;
-		usleep( numberinms*1000 );
-			
-	
-		if(one == 1){
-	
-			if(j < 100){
-				++j;
-				ReadPW(PW0,&ss1);
-				ss1temp[j] = ss1;
-				//printf("SS 1: %d [in]\r\n\n",ss1);
-			}
-			else{
-				ss1ave = Average_Reading(ss1temp);//get average of 100 readings
-				printf("Trigger Value = %d [in] vs. Average Value: %d [in]\r\n\n",ss1t,ss1ave);
-				if(ss1t == ss1ave){//if the average is equal to the trigger value, it is probably a wall
-					printf("SS1 is detecting a wall, keep moving.\n\n");
-					triggered = false;//this will take it out of this loop and flags will be set to current.
-				}
-				else{//if the average and trigger values are not same, it is probably a moving person or object
-//moving around so stay put and read an array of values again.
-					printf("SS1 is detecting a moving object, stay put.\n\n");
-					j = 0;
-				}
-			}
-			
-			
-		}
-		else{//sensor 1 was not triggered within 24 inches.
-		}
-		
-		
-		
-		
-		
-		}//end if triggered == true
-		
-		*/
-
-
-
-
-
-
-
-
-
-

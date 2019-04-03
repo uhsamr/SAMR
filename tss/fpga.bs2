@@ -1,0 +1,116 @@
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+
+' -----[ Declarations ]----------------------------------------------------
+
+
+' -----[ Initialization ]--------------------------------------------------
+
+OUTPUT 15
+
+
+INPUT 14
+INPUT 12
+INPUT 10
+INPUT 8
+INPUT 6
+INPUT 4
+INPUT 2
+INPUT 0
+
+
+xDist VAR Word
+xX VAR Byte
+xY VAR Byte
+
+' -----[ Main Routine ]----------------------------------------------------
+DO
+
+
+'IF IN0 = 1 THEN
+PULSIN 14, 1,xDist
+xX = xDist/147
+xX = xX*2+1
+'xX = xX*3-2
+IF xX < 8 THEN
+Xx = 8
+ENDIF
+xY = 1
+SEROUT 15, 84, 10, [xY]
+SEROUT 15, 84, 10, [xX]
+'PAUSE 50
+
+PULSIN 12, 1,xDist
+xX = xDist/147
+xX = xX*2+1
+'xX = xX*3-2
+IF xX < 8 THEN
+Xx = 8
+ENDIF
+xY = 2
+SEROUT 15, 84, 10, [xY]
+SEROUT 15, 84, 10, [xX]
+'PAUSE 50
+
+PULSIN 10, 1,xDist
+xX = xDist/147
+xX = xX*2+1
+'xX = xX*3-2
+IF xX < 8 THEN
+Xx = 8
+ENDIF
+xY = 3
+SEROUT 15, 84, 10, [xY]
+SEROUT 15, 84, 10, [xX]
+'PAUSE 50
+
+PULSIN 8, 1,xDist
+xX = xDist/147
+xX = xX*2+1
+'xX = xX*3-2
+IF xX < 8 THEN
+ Xx = 8
+ENDIF
+xY = 4
+SEROUT 15, 84, 10, [xY]
+SEROUT 15, 84, 10, [xX]
+'PAUSE 50
+
+PULSIN 6, 1,xDist
+xX = xDist/147
+xX = xX*2+1
+'xX = xX*3-2
+IF xX < 8 THEN
+Xx = 8
+ENDIF
+xY = 5
+SEROUT 15, 84, 10, [xY]
+SEROUT 15, 84, 10, [xX]
+'PAUSE 50
+
+PULSIN 4, 1,xDist
+xX = xDist/147
+xX = xX*2+1
+'xX = xX*3-2
+IF xX < 8 THEN
+Xx = 8
+ENDIF
+xY = 6
+SEROUT 15, 84, 10, [xY]
+SEROUT 15, 84, 10, [xX]
+'PAUSE 50
+
+PULSIN 2, 1,xDist
+xX = xDist/147
+xX = xX*2+1
+'xX = xX*3-2
+IF xX < 8 THEN
+Xx = 8
+ ENDIF
+xY = 7
+SEROUT 15, 84, 10, [xY]
+SEROUT 15, 84, 10, [xX]
+PAUSE 50
+'ENDIF
+
+LOOP
