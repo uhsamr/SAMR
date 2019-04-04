@@ -85,17 +85,17 @@ int main() {
 
 				LED = 0;
 //sensor 1 (left corner)
-		if((sonar1t < 24) && (sonar1t >= 8)){//if first sonar sensor reads less than 2 feet
+		if((sonar1t < 24) && (sonar1t > 8)){//if first sonar sensor reads less than 2 feet
 			printf("SS 1 triggered: %d [in]\r\n\n",sonar1t);
 			LED = LED + 0x1;}//turn on first LEDR0}
 		else{}
 //sensor 2 (left middle)
-		if((sonar2t < 24) && (sonar2t >= 8)){//if second sonar sensor reads less than 2 feet
+		if((sonar2t < 24) && (sonar2t > 8)){//if second sonar sensor reads less than 2 feet
 			printf("SS 2 triggered: %d [in]\r\n\n",sonar2t);
 			LED = LED + 0x2;}
 		else{}
 //sensor 3 (left floor)
-		if((sonar3t < 24) && (sonar3t >= 8)){
+		if((sonar3t < 24) && (sonar3t > 8)){
 			printf("SS 3 triggered: %d [in]\r\n\n",sonar3t);
 			LED = LED + 0x4;}
 		else{}
