@@ -20,7 +20,7 @@
 #define FORWARD_DUTY 0x80000BB8//this gives a decent forward speed for both motors. 3,000 / 5,000
 #define REVERSE_DUTY 0x80000000//
 
-unsigned int Average_Reading(unsigned int sensor[]);
+unsigned int Average_Reading(unsigned int sensor[], int number_readings);
 
 void Stop_Motors(void);
 

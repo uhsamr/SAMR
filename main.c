@@ -9,43 +9,39 @@ Capstone Conference: 4/26/2019
 #include "functions.h"
 
 /********************************************GLOBAL VARIABLE DECLARATIONS********************************************/
- int numberinms = 0, pushed = 0, i = 0, j = 0, k = 0;
- int flags[6];
- unsigned int switches, buttons;
- //these variables save the current value of each sensor
- unsigned int ss1, ss2, ss3, ss4, ss5, ss6, ss7;
- //trigger vatiable if sensor detected a wall (active low)
- unsigned int ss1wall = 1, ss2wall = 1, ss3wall = 1, ss4wall = 1, ss5wall = 1, ss6wall = 1, ss7wall = 1;
- //trigger variable if sensor detected a person (active low)
- unsigned int ss1person = 1, ss2person = 1, ss3person = 1, ss4person = 1, ss5person = 1, ss6person = 1, ss7person = 1;
- //These variables save the current sensor average values and are used to check if anything was detected.
- unsigned int sonar1t, sonar2t, sonar3t, sonar4t, sonar5t, sonar6t, sonar7t;
- //these are arrays used to take average of readings of sensors for more accurate reading.
- unsigned int sonar1[100], sonar2[100], sonar3[100], sonar4[100], sonar5[100], sonar6[100], sonar7[100];
- //If a sensor detected something its triggered value will be saved in this temp variable for comparison.
- unsigned int ss1t, ss2t, ss3t, ss4t, ss5t, ss6t, ss7t;
- //these are the average variables for each sensor
- unsigned int ss1ave, ss2ave, ss3ave, ss4ave, ss5ave, ss6ave, ss7ave;
- //these are flag variables for each sensor. flags are active low meaning if it equal 0 then it was triggered. safe state is 1.
- int one = 1, two = 1, three = 1, four = 1, five = 1, six = 1, seven = 1;
- //these are arrays of 100 readings to take average and see if person or wall detected.
- unsigned int ss1temp[100], ss2temp[100];
- unsigned int dutyl = 3800, dutyr = 3800;//start both duty cycles at off.
- bool triggered = false;
- bool walldetected = false;
- bool humancheck = false;
+int numberinms = 0, pushed = 0, i = 0, j = 0, k = 0;
+int srint, numberinms, LED, rc, allsensorsread = 0, start_at_1 = 1, array_position;
+char srchar;
+unsigned int switches, buttons, number_readings;
+int srss1 = 1, srss2 = 1, srss3 = 1, srss4 = 1, srss5 = 1, srss6 = 1, srss7 = 1;//active low (srss# = serial read sonar sensor #
+//these variables save the current value of each sensor
+unsigned int ss1, ss2, ss3, ss4, ss5, ss6, ss7;
+//trigger vatiable if sensor detected a wall (active low)
+unsigned int ss1wall = 1, ss2wall = 1, ss3wall = 1, ss4wall = 1, ss5wall = 1, ss6wall = 1, ss7wall = 1;
+//trigger variable if sensor detected a person (active low)
+unsigned int ss1person = 1, ss2person = 1, ss3person = 1, ss4person = 1, ss5person = 1, ss6person = 1, ss7person = 1;
+//These variables save the current sensor average values and are used to check if anything was detected.
+unsigned int sonar1t, sonar2t, sonar3t, sonar4t, sonar5t, sonar6t, sonar7t;
+//these are arrays used to take average of readings of sensors for more accurate reading.
+unsigned int sonar1[100], sonar2[100], sonar3[100], sonar4[100], sonar5[100], sonar6[100], sonar7[100];
+//If a sensor detected something its triggered value will be saved in this temp variable for comparison.
+unsigned int ss1t, ss2t, ss3t, ss4t, ss5t, ss6t, ss7t;
+//these are the average variables for each sensor
+unsigned int ss1ave, ss2ave, ss3ave, ss4ave, ss5ave, ss6ave, ss7ave;
+//these are flag variables for each sensor. flags are active low meaning if it equal 0 then it was triggered. safe state is 1.
+int one = 1, two = 1, three = 1, four = 1, five = 1, six = 1, seven = 1;
+//these are arrays of 100 readings to take average and see if person or wall detected.
+unsigned int ss1temp[100], ss2temp[100];
+unsigned int dutyl = 3800, dutyr = 3800;//start both duty cycles at off.
+bool triggered = false;
+bool walldetected = false;
+bool humancheck = false;
 /********************************************END GLOBAL VARIABLE DECLARATIONS********************************************/
 
 /*************************************************FUNCTION DECLARATIONS*************************************************/
-void Test_All_Sensors(void);
-
-void Test_All_Sensors_Arrays(void);
-
 void button_L_R_PWM(void);
 
 void switch_controlled_duty_cycle(void);
-
-void read_all_sensors(void);
 
 void read_all_sensors_triggered(void);
 
@@ -66,19 +62,51 @@ void avoid_objects(void);
 void sensor_4_triggered(void);
 
 void sensor_1_and_7_triggered(void);
+
+void get_average_of_all_sensors(void);
+
+void reset_srss_flags(void);
+
+void serial_sensor_number(void);
+
+void serial_sensor_number_triggered(void);
+
+void serial_sensor_value_single(void);
+
+void serial_sensor_value_array(void);
+
+void serial_sensor_value_single_triggered(void);
+
+void serial_sensor_value_array_triggered(void);
+
+void all_sensors_read_check(void);
+
+void read_all_sensors_single(void);
+	
+void read_all_sensors_array(void);
+
+void read_all_sensors_single_triggered(void);
+
+void read_all_sensors_array_triggered(void);
 /***********************************************END FUNCTION DECLARATIONS***********************************************/
  
 /**************************************************START MAIN FUNCTION**************************************************/
 int main() {
 
 	 init();
+	 number_readings = 2;
 	 WriteLed(0x0);//turn all LEDs off.		
 	 printroscoe();//print rOSCOE on displays
 	 Stop_Motors();//start motors at 3,800 (off)
 	
 	for(;;){
-		/*This function sets all sonar#t to the current value the sensors are reading*/
-		read_all_sensors();
+		
+		read_all_sensors_single();
+		
+		/*ONLY NEED THIS WHEN DOING ARRAY READING*/
+		//read_all_sensors_array();	
+		//get_average_of_all_sensors();
+
 		/*This function takes all "sonar#t" values and checks to see if they detected anything within their
 		range, if so it sets that sensors flag and saves the "sonar#t" value to a "sonar#t" variable. If sonar1t 
 		detected something then ss1t saves sonar1t value and the flag "one" will be set to 0 becuase the flags 
@@ -93,7 +121,7 @@ int main() {
 			
 			/*This function will take an array of reading for only triggered sensors and save the average of the
 			array into sonar#t for comparison to the temp value ss#t, which holds the initial triggered sensor reading.*/
-			read_all_sensors_triggered();
+			read_all_sensors_single_triggered();
 
 			/*If the correct combination of sensors were triggered then go on to determine if wall or human, if not
 			then the code will simply rotate according to sensors that were triggered with avoid_objects();.*/
@@ -105,7 +133,7 @@ int main() {
 			depending on the values of the newest sensor reading (sonar#t) and the original triggered reading (ss#t).*/
 /*
 SHOULD I CALL determine_wall_or_human(); MORE THAN ONCE INCASE THE READINGS WERE NOT STEADY AND IT WAS A WALL
-BUT THE SENSORS WERE NOT SETTLED ON THEIR READINGS? read_all_sensors_triggered(); and call determine_wall_or_human();
+BUT THE SENSORS WERE NOT SETTLED ON THEIR READINGS? read_all_sensors_single_triggered(); and call determine_wall_or_human();
 multiple times and take the most common result? Ex. call this 5 times and if determine_wall_or_human(); determined
 wall 3/5 times then we will set walldetected = true. if determined human 3/5 we will go to human triggered.
 */
@@ -121,23 +149,6 @@ wall 3/5 times then we will set walldetected = true. if determined human 3/5 we 
 				
 				sensor_1_and_7_triggered();
 	
-				
-//*********************************************************************************************************************
-				// while(ss1wall == 0){/*While sensor 1 wall flag is set*/
-					// /*This function make left motor start going forward and right motor start going backwards. Each time the code
-					// runs through this loop the speed of the motors in those directions will increase by 50 until they reach their 
-					// max speed. This means roughly every 200[ms] (how long it takes to read sensors) the motors will increase in 
-					// speed until it avoided the wall.*/
-					// turn_right();
-					// read_all_sensors_triggered();
-					// /*This function takes the new sonar#t number and checks to see if it is still within the triggering range of that sensor.
-					// If it is then the ss#wall flag remains triggered, if it is not it will change the flag to 1 (off). If the sensor is no 
-					// longer reading in range then the ss#wall going 1 will break the while loop and the code will restart and check sensor again.
-					// If the sensor is still in range then ss#wall stays 0 and the motors turning speed increases and all sensors are read again
-					// to determine if sensor reading something in range still.*/
-					// determine_if_wall_avoided();
-				// }//end if ss1 detected wall
-//*********************************************************************************************************************
 			}//end if walldetected
 			else if(humancheck == true){/*if no wall detected then a human was detected. Wait 5-10 seconds and restart checking all sensors again
 			This is because if it was maybe someone passing or a glitch reading then the sensors will read and they will
@@ -146,7 +157,7 @@ wall 3/5 times then we will set walldetected = true. if determined human 3/5 we 
 				Stop_Motors();
 				dutyl = 3800;
 				dutyr = 3800;
-				numberinms = 5000;
+				numberinms = 1000;
 				usleep( numberinms*1000 );
 				triggered = false;
 			}//end else human detected
@@ -162,43 +173,6 @@ wall 3/5 times then we will set walldetected = true. if determined human 3/5 we 
 return(0);}
 /***************************************************END MAIN FUNCTION***************************************************/
 
-
-/*********************************************************************************************************************
-Calling this function will take a reading from each sensor every 2[ms] and store it in an array. After 100 readings,
-which is 200[ms], the function takes the average of the array and stores that value in sonar#t.
-*********************************************************************************************************************/
-void read_all_sensors(void){
-		 //The loop delay is 2[ms] and runs 100 times so takes 200[ms] to get readings.
-		for(j = 0; j < 100; j++){
-			ReadPW(PW0,&ss1);
-			ReadPW(PW1,&ss2);
-			ReadPW(PW2,&ss3);
-			ReadPW(PW3,&ss4);
-			ReadPW(PW4,&ss5);
-			ReadPW(PW5,&ss6);
-			ReadPW(PW6,&ss7);
-			sonar1[j] = ss1;
-			sonar2[j] = ss2;
-			sonar3[j] = ss3;
-			sonar4[j] = ss4;
-			sonar5[j] = ss5;
-			sonar6[j] = ss6;
-			sonar7[j] = ss7;
-			// wait function where numberinms is how many mili-seconds to wait.
-			numberinms = 2;
-			usleep( numberinms*1000 );
-		}
-			sonar1t = Average_Reading(sonar1);//get average of 100 readings	
-			sonar2t = Average_Reading(sonar2);
-			sonar3t = Average_Reading(sonar3);	
-			sonar4t = Average_Reading(sonar4);
-			sonar5t = Average_Reading(sonar5);
-			sonar6t = Average_Reading(sonar6);
-			sonar7t = Average_Reading(sonar7);
-	
-}// END read_all_sensors
-
-
 /*********************************************************************************************************************
 This function takes the sonar#t values and checks if any of the sensors readings are within the specified range for
 detection. If any sensor reading is in detection range then the value will be saved in ss#t, this is a trigger saving
@@ -211,72 +185,57 @@ void check_if_anything_detected(void){
 /*If a sensor reads something less than 24 inches away it will set the corresponding
 flag by setting the number sensor it is equal to 1. If a sensor doesnt detect anything
 it will set flag to 0. Flag is active high.*/
-			
+		LED = 0;
 //sensor 1 (left corner)
-		if((sonar1t < 24) && (sonar1t > 0)){//if first sonar sensor reads less than 2 feet
+		if((sonar1t < 24) && (sonar1t > 8)){//if first sonar sensor reads less than 2 feet
 			printf("SS 1 triggered: %d [in]\r\n\n",sonar1t);
-			WriteLed(0x1);//turn on first LEDR0
+			LED = LED + 0x1;
 			ss1t = sonar1t;//save current value in triggered value to compare
-			one = 0;//set sensor 1 trigger flag
-			flags[0] = 0;}
-		else{
-			one = 1;
-			flags[0] = 0;}
+			one = 0;}//set sensor 1 trigger flag
+		else{one = 1;}
 //sensor 2 (left middle)
-		if((sonar2t < 24) && (sonar2t > 0)){//if second sonar sensor reads less than 2 feet
+		if((sonar2t < 24) && (sonar2t > 8)){//if second sonar sensor reads less than 2 feet
 			printf("SS 2 triggered: %d [in]\r\n\n",sonar2t);
-			WriteLed(0x2);
+			LED = LED + 0x2;
 			ss2t = sonar2t;//save current value in temp to compare to.
-			two = 0;
-			flags[1] = 0;}
-		else{
-			two = 1;
-			flags[1] = 1;}
+			two = 0;}
+		else{two = 1;}
 //sensor 3 (left floor)
-		if((sonar3t > 26)){
+		if((sonar3t > 57)){
 			printf("SS 3 triggered: %d [in]\r\n\n",sonar3t);
-			WriteLed(0x4);
+			LED = LED + 0x4;
 			ss3t = sonar3t;//save current value in temp to compare to.
-			three = 0;
-			flags[2] = 0;}
-		else{three = 1;
-			flags[2] = 1;}
+			three = 0;}
+		else{three = 1;}
 //sensor 4 (middle middle)
-		if((sonar4t < 24) && (sonar4t > 0)){
+		if((sonar4t < 24) && (sonar4t > 8)){
 			printf("SS 4 triggered: %d [in]\r\n\n",sonar4t);
-			WriteLed(0x10);
+			LED = LED + 0x8;
 			ss4t = sonar4t;//save current value in temp to compare to.
-			four = 0;
-			flags[3] = 0;}
-		else{four = 1;
-			flags[3] = 1;}
+			four = 0;}
+		else{four = 1;}
 //sensor 5 (right floor)
-		if((sonar5t > 26)){
+		if((sonar5t > 57)){
 			printf("SS 5 triggered: %d [in]\r\n\n",sonar5t);
-			WriteLed(0x20);
+			LED = LED + 0x10;
 			ss5t = sonar5t;//save current value in temp to compare to.
-			five = 0;
-			flags[4] = 0;}
-		else{five = 1;
-			flags[4] = 1;}
+			five = 0;}
+		else{five = 1;}
 //sensor 6 (right middle)
-		if((sonar6t < 24) && (sonar6t > 0)){
+		if((sonar6t < 24) && (sonar6t > 8)){
 			printf("SS 6 triggered: %d [in]\r\n\n",sonar6t);
-			WriteLed(0x40);
+			LED = LED + 0x20;
 			ss6t = sonar6t;//save current value in temp to compare to.
-			six = 0;
-			flags[5] = 0;}
-		else{six = 1;
-			flags[5] = 1;}
+			six = 0;}
+		else{six = 1;}
 //sensor 7 (right corner)
-		if((sonar7t < 24) && (sonar7t > 0)){
+		if((sonar7t < 24) && (sonar7t > 8)){
 			printf("SS 7 triggered: %d [in]\r\n\n",sonar7t);
-			WriteLed(0x80);
+			LED = LED + 0x40;
 			ss7t = sonar7t;//save current value in temp to compare to.
-			seven = 0;
-			flags[6] = 0;}
-		else{seven = 1;
-			flags[6] = 1;}
+			seven = 0;}
+		else{seven = 1;}
+		WriteLed(LED);
 		
 //Check sensor trigger flags
 		/*IF ONLY SENSOR 1 OR SENSOR 7 SET DO NOT STOP OR SET TRIGGERED FLAG*/
@@ -305,52 +264,46 @@ array. After 100 readings, which is 200[ms], the function takes the average of t
 *********************************************************************************************************************/
 void read_all_sensors_triggered(void){
 		 //The loop delays 2ms and runs 100 times so take 200ms to get readings.
-		for(j = 0; j < 100; j++){
+		// for(j = 0; j < 100; j++){
 			
-if(one == 0){
-			ReadPW(PW0,&ss1);
-			sonar1[j] = ss1;
-			}
-if(two == 0){
-			ReadPW(PW1,&ss2);
-			sonar2[j] = ss2;
-			}
-if(three == 0){
-			ReadPW(PW2,&ss3);
-			sonar3[j] = ss3;
-			}
-if(four == 0){
-			ReadPW(PW3,&ss4);
-			sonar4[j] = ss4;
-			}
-if(five == 0){
-			ReadPW(PW4,&ss5);
-			sonar5[j] = ss5;
-			}
-if(six == 0){
-			ReadPW(PW5,&ss6);
-			sonar6[j] = ss6;
-			}
-if(seven == 0){
-			ReadPW(PW6,&ss7);
-			sonar7[j] = ss7;
-			}
+// if(one == 0){
+			// ReadPW(PW0,&ss1);
+			// sonar1[j] = ss1;
+			// }
+// if(two == 0){
+			// ReadPW(PW1,&ss2);
+			// sonar2[j] = ss2;
+			// }
+// if(three == 0){
+			// ReadPW(PW2,&ss3);
+			// sonar3[j] = ss3;
+			// }
+// if(four == 0){
+			// ReadPW(PW3,&ss4);
+			// sonar4[j] = ss4;
+			// }
+// if(five == 0){
+			// ReadPW(PW4,&ss5);
+			// sonar5[j] = ss5;
+			// }
+// if(six == 0){
+			// ReadPW(PW5,&ss6);
+			// sonar6[j] = ss6;
+			// }
+// if(seven == 0){
+			// ReadPW(PW6,&ss7);
+			// sonar7[j] = ss7;
+			// }
 			
-			// wait function where numberinms is how many ms to wait.
-			numberinms = 2;
-			usleep( numberinms*1000 );
-								}//end for loop
+			//wait function where numberinms is how many ms to wait.
+			// numberinms = 2;
+			// usleep( numberinms*1000 );
+								// }//end for loop
 		
-			/*Can take average of all sonars again because if a sensors flag was not 
-			triggered then its array will not be over written, therefore the sonar#t
-			average will end up being the same still*/
-			sonar1t = Average_Reading(sonar1);//get average of 100 readings	
-			sonar2t = Average_Reading(sonar2);	
-			sonar3t = Average_Reading(sonar3);	
-			sonar4t = Average_Reading(sonar4);
-			sonar5t = Average_Reading(sonar5);	
-			sonar6t = Average_Reading(sonar6);
-			sonar7t = Average_Reading(sonar7);
+			// /*Can take average of all sonars again because if a sensors flag was not 
+			// triggered then its array will not be over written, therefore the sonar#t
+			// average will end up being the same still*/
+			// get_average_of_all_sensors();
 			
 }// END read_all_sensors_triggered
 
@@ -683,6 +636,7 @@ else{
 
 }// END determine_if_wall_avoided
 
+
 /*********************************************************************************************************************
 This function will check the triggered sensors and decide if we need to do a human check or not. This is to make sure
 the robot is not constantly stopping for every sensor trigger. Unless sensor 4 is triggered or sensor 1 and 7
@@ -706,6 +660,7 @@ void check_sensor_flags(void){
 	}
 }
 
+
 /********************************************************************************************************************
 This function will be called if the sensor combinations that are being used to detect a human or wall were not set.
 This means that the robot must take the sensors that were triggered and try avoiding the objects that triggered them.
@@ -716,7 +671,7 @@ void avoid_objects(void){
 	too into the path of samr then sensors 2 or 6 will also trigger, which will trigger the humancheck flag.*/
 	while(((three == 0) && (five == 0)) || (three == 0) || ((one == 0) && (two == 0)) ){//line 5, 6 & 9 Sensor Scenarios for SAMR
 		turn_right();//starts turning motors
-		read_all_sensors_triggered();//checks only sensors that were triggered.
+		read_all_sensors_single_triggered();//checks only sensors that were triggered.
 		/*only sensors that were triggered were checked again so only those flags will be changed.*/
 		check_if_anything_detected();
 		//rotate right
@@ -724,7 +679,7 @@ void avoid_objects(void){
 				
 	while((five == 0) || ((six == 0) && (seven == 0))){//line 7 & 8 Sensor Scenarios for SAMR
 		turn_left();//starts turning motors
-		read_all_sensors_triggered();//only reads sensors triggered and changes their sonar#t value
+		read_all_sensors_single_triggered();//only reads sensors triggered and changes their sonar#t value
 		check_if_anything_detected();//takes new sonar#t value of triggered sensors and updates triggered flags.
 		//rotate left
 	}//end while
@@ -745,39 +700,39 @@ void sensor_4_triggered(void){
 		if((ss2wall == 0) && (ss6wall == 0) && (ss7wall == 0)){//line 15
 			turn_left();//starts turning motors left.
 			/*only reads sensors whose flags were set and updates their sonar#t value to be checked again*/
-			read_all_sensors_triggered();
+			read_all_sensors_single_triggered();
 			/*This takes new sonar#t value of triggered sensors and checks to see if it is within their
 			initial trigger range still.*/
 			determine_if_wall_avoided();
 		}
 		else if((ss1wall == 0) && (ss2wall == 0) && (ss6wall == 0)){//line 16 Sensor Scenarios for SAMR
 			turn_right();
-			read_all_sensors_triggered();
+			read_all_sensors_single_triggered();
 			determine_if_wall_avoided();
 		}
 		else if((ss6wall == 0) && (ss7wall == 0)){//line 10 Sensor Scenarios for SAMR
 			turn_left();
-			read_all_sensors_triggered();
+			read_all_sensors_single_triggered();
 			determine_if_wall_avoided();
 		}
 		else if((ss1wall == 0) && (ss2wall == 0)){//line 11 Sensor Scenarios for SAMR
 			turn_right();
-			read_all_sensors_triggered();
+			read_all_sensors_single_triggered();
 			determine_if_wall_avoided();
 		}
 		else if((ss2wall == 0) && (ss6wall == 0)){//line 14 Sensor Scenarios for SAMR
 			turn_left();
-			read_all_sensors_triggered();
+			read_all_sensors_single_triggered();
 			determine_if_wall_avoided();
 		}
 		else if((ss1wall == 0) || (ss2wall == 0)){//line 12 Sensor Scenarios for SAMR
 			turn_right();
-			read_all_sensors_triggered();
+			read_all_sensors_single_triggered();
 			determine_if_wall_avoided();
 		}
 		else if((ss6wall == 0) || (ss7wall == 0)){//line 13 Sensor Scenarios for SAMR
 			turn_left();
-			read_all_sensors_triggered();
+			read_all_sensors_single_triggered();
 			determine_if_wall_avoided();
 		}
 		else{//else ONLY sensor 4 detected something?
@@ -809,17 +764,17 @@ THOSE SENSORS INTO ACCOUNT FOR AVOIDING THE WALL??????
 */
 		if((ss2wall == 0) && (ss6wall == 0)){//line 20 Sensor Scenarios for SAMR
 			turn_right();
-			read_all_sensors_triggered();
+			read_all_sensors_single_triggered();
 			determine_if_wall_avoided();
 		}
 		else if((ss2wall == 0)){//line 19 Sensor Scenarios for SAMR
 			turn_right();
-			read_all_sensors_triggered();
+			read_all_sensors_single_triggered();
 			determine_if_wall_avoided();
 		}
 		else if((ss6wall == 0)){//line 18 Sensor Scenarios for SAMR
 			turn_left();
-			read_all_sensors_triggered();
+			read_all_sensors_single_triggered();
 			determine_if_wall_avoided();
 		}
 		else{//only sensor 1 & 7 detected something?
@@ -829,191 +784,446 @@ THOSE SENSORS INTO ACCOUNT FOR AVOIDING THE WALL??????
 	
 }
 
-/********************************************************************************************************************
-Calling this function will take all 7 sensor readings and light up the corresponding LED and print out the 
-sensor triggered and the value it read. Sensors triggered if they read withint 24[in].
-********************************************************************************************************************/
-void Test_All_Sensors(void){
-/*call this in a for(;;) loops to constantly check if any of the sensors
-read something within 24 inches, if they do it will print which sensor,
-the reading and light up the corresponding LED.*/
-		ReadPW(PW0,&ss1);
-		ReadPW(PW1,&ss2);
-		ReadPW(PW2,&ss3);
-		ReadPW(PW3,&ss4);
-		ReadPW(PW4,&ss5);
-		ReadPW(PW5,&ss6);
-		ReadPW(PW6,&ss7);
-//sensor 1
-		if((ss1 < 24) && (ss1 > 0)){//if first sonar sensor reads less than 2 feet
-			printf("SS 1: %d [in]\r\n\n",ss1);
-			//WritePWM(PWMl,LOW_DUTY);
-			WriteLed(0x1);
-			one = 0;}//max speed forward
-		else{
-			//WritePWM(PWMl,STOP_DUTY);
-			one = 1;}
-//sensor 2
-		if((ss2 < 24) && (ss2 > 0)){//if second sonar sensor reads less than 2 feet
-			//WritePWM(PWMr,LOW_DUTY);
-			printf("SS 2: %d [in]\r\n\n",ss2);
-			WriteLed(0x2);
-			two = 0;}//max speed forward
-		else{
-			//WritePWM(PWMr,STOP_DUTY);
-			two = 1;}
-//sensor 3
-		if((ss3 < 24) && (ss3 > 0)){
-			printf("SS 3: %d [in]\r\n\n",ss3);
-			WriteLed(0x4);
-			three = 0;}
-		else{three = 1;}
-//sensor 4
-		if((ss4 < 24) && (ss4 > 0)){
-			printf("SS 4: %d [in]\r\n\n",ss4);
-			WriteLed(0x10);
-			four = 0;}
-		else{four = 1;}
-//sensor 5
-		if((ss5 < 24) && (ss5 > 0)){
-			printf("SS 5: %d [in]\r\n\n",ss5);
-			WriteLed(0x20);
-			five = 0;}
-		else{five = 1;}
-//sensor 6
-		if((ss6 < 24) && (ss6 > 0)){
-			printf("SS 6: %d [in]\r\n\n",ss6);
-			WriteLed(0x40);
-			six = 0;}
-		else{six = 1;}
-//sensor 7
-		if((ss7 < 24) && (ss7 > 0)){
-			printf("SS 7: %d [in]\r\n\n",ss7);
-			WriteLed(0x80);
-			seven = 0;}
-		else{seven = 1;}
-		//if all trigger flags == 1 then turn off all LEDs and do not print anything.
-		if((one == 0) || (two == 0) || (three == 0) || (four == 0) || (five == 0) || (six == 0) || (seven == 0)){}
-		else{WriteLed(0x0);}
-}
-/********************************************************************************************************************
-Calling this function will take all 7 sensor readings and light up the corresponding LED and print out the 
-sensor triggered and the value it read. Sensors triggered if they read withint 24[in].
-********************************************************************************************************************/
-void Test_All_Sensors_Arrays(void){
-/*call this in a for(;;) loops to constantly check if any of the sensors
-read something within 24 inches, if they do it will print which sensor,
-the reading and light up the corresponding LED.*/
-		
-		if(j < 100){
-			ReadPW(PW0,&ss1);
-			ReadPW(PW1,&ss2);
-			ReadPW(PW2,&ss3);
-			ReadPW(PW3,&ss4);
-			ReadPW(PW4,&ss5);
-			ReadPW(PW5,&ss6);
-			ReadPW(PW6,&ss7);
-			sonar1[j] = ss1;
-			sonar2[j] = ss2;
-			sonar3[j] = ss3;
-			sonar4[j] = ss4;
-			sonar5[j] = ss5;
-			sonar6[j] = ss6;
-			sonar7[j] = ss7;
-			++j;
-		}
-		else{
-			sonar1t = Average_Reading(sonar1);//get average of 100 readings	
-			sonar2t = Average_Reading(sonar2);//get average of 100 readings	
-			sonar3t = Average_Reading(sonar3);//get average of 100 readings	
-			sonar4t = Average_Reading(sonar4);//get average of 100 readings	
-			sonar5t = Average_Reading(sonar5);//get average of 100 readings	
-			sonar6t = Average_Reading(sonar6);//get average of 100 readings	
-			sonar7t = Average_Reading(sonar7);//get average of 100 readings	
-			j = 0;
-		}
 
-/*If a sensor reads something less than 24 inches away it will set the corresponding
-flag by setting the number sensor it is equal to 1. If a sensor doesnt detect anything
-it will set flag to 0. Flag is active high.*/
+/*********************************************************************************************************************
+This function takes all sonar# arrays and calls Average_Reading for each sensor and stores the average of all
+values in sonar#t.
+*********************************************************************************************************************/
+void get_average_of_all_sensors(void){
+	//get average of 100 readings	
+	sonar1t = Average_Reading(sonar1, number_readings);
+	sonar2t = Average_Reading(sonar2, number_readings);
+	sonar3t = Average_Reading(sonar3, number_readings);	
+	sonar4t = Average_Reading(sonar4, number_readings);
+	sonar5t = Average_Reading(sonar5, number_readings);
+	sonar6t = Average_Reading(sonar6, number_readings);
+	sonar7t = Average_Reading(sonar7, number_readings);
+}
+
+
+/*******************************************************************************************************************************************
+This function is called after each sensors reading is read so that the next loop all flags will be cleared and the loop can determine
+which sensor number is about to be read so it can set that flag and the previous flag will not still be set.
+*******************************************************************************************************************************************/
+void reset_srss_flags(void){
+	//printf(" %d\n\n",srint);
+	srss1 = 1;
+	srss2 = 1;
+	srss3 = 1;
+	srss4 = 1;
+	srss5 = 1;
+	srss6 = 1;
+	srss7 = 1;
+}
+
+
+/********************************************************************************************************************************************
+This function will trigger every time the do while loop checks a sensors reading, this will only happen after the sensor number has been
+determined and then the sensor reading for that sensor is checked. This means that allsensorsread will only increase every other run through
+the loop. If the flag has not gone up to 6 it will increase +1. Once the flag hits 6 it will reset and increment array_position which
+tells the arrays that sensor values are being stored in to increment by 1.
+********************************************************************************************************************************************/
+void all_sensors_read_check(void){
+		if(allsensorsread == 6){//if all 7 read, reset number and increment array position for all.
+			allsensorsread = 0;
+			array_position = array_position + 1;
+			//printf("Reading %d of all sensors.\n\n",(i/14) + 1);
+		}
+		else{
+		allsensorsread = allsensorsread + 1;//add to number of sensors read for array position.
+		}
+}
+
+/***************************************************FUNCTIONS FOR READING ALL SENSORS ONCE***************************************************/
+
+/********************************************************************************************************************************************
+This function takes the serial reading of sensors and saves each corresonding sensor reading to sonar#t. Readings from serial come in as:
+sensor number
+sensor reading
+and repeates constantly.
+********************************************************************************************************************************************/
+void read_all_sensors_single(void){
+
+	i = 0;
+	do{
+		rc = ReadSerial(SONAR,&srchar);//reads serial from SONAR and puts in srchar
+		srint = (int)srchar;//convert char reading to integer
+		if(rc){//only run if rc == 1, meaning it successfully read a new value.
 			
-//sensor 1 (left corner)
-		if((sonar1t < 24) && (sonar1t > 0)){//if first sonar sensor reads less than 2 feet
-			printf("SS 1 triggered: %d [in]\r\n\n",sonar1t);
-			WriteLed(0x1);
-			ss1t = sonar1t;//save current value in temp to compare to.
-			one = 0;
-			flags[0] = 0;}
-		else{
-			one = 1;
-			flags[0] = 0;}
-//sensor 2 (left middle)
-		if((sonar2t < 24) && (sonar2t > 0)){//if second sonar sensor reads less than 2 feet
-			printf("SS 2 triggered: %d [in]\r\n\n",sonar2t);
-			WriteLed(0x2);
-			ss2t = sonar2t;//save current value in temp to compare to.
-			two = 0;
-			flags[1] = 0;}
-		else{
-			two = 1;
-			flags[1] = 1;}
-//sensor 3 (left floor)
-		if((sonar3t < 24) && (sonar3t > 0)){
-			printf("SS 3 triggered: %d [in]\r\n\n",sonar3t);
-			WriteLed(0x4);
-			ss3t = sonar3t;//save current value in temp to compare to.
-			three = 0;
-			flags[2] = 0;}
-		else{three = 1;
-			flags[2] = 1;}
-//sensor 4 (middle middle)
-		if((sonar4t < 24) && (sonar4t > 0)){
-			printf("SS 4 triggered: %d [in]\r\n\n",sonar4t);
-			WriteLed(0x10);
-			ss4t = sonar4t;//save current value in temp to compare to.
-			four = 0;
-			flags[3] = 0;}
-		else{four = 1;
-			flags[3] = 1;}
-//sensor 5 (right floor)
-		if((sonar5t < 24) && (sonar5t > 0)){
-			printf("SS 5 triggered: %d [in]\r\n\n",sonar5t);
-			WriteLed(0x20);
-			ss5t = sonar5t;//save current value in temp to compare to.
-			five = 0;
-			flags[4] = 0;}
-		else{five = 1;
-			flags[4] = 1;}
-//sensor 6 (right middle)
-		if((sonar6t < 24) && (sonar6t > 0)){
-			printf("SS 6 triggered: %d [in]\r\n\n",sonar6t);
-			WriteLed(0x40);
-			ss6t = sonar6t;//save current value in temp to compare to.
-			six = 0;
-			flags[5] = 0;}
-		else{six = 1;
-			flags[5] = 1;}
-//sensor 7 (right corner)
-		if((sonar7t < 24) && (sonar7t > 0)){
-			printf("SS 7 triggered: %d [in]\r\n\n",sonar7t);
-			WriteLed(0x80);
-			ss7t = sonar7t;//save current value in temp to compare to.
-			seven = 0;
-			flags[6] = 0;}
-		else{seven = 1;
-			flags[6] = 1;}
-		
+			if(srint < 8){//if srint less than 8 it is a sensor
+				serial_sensor_number();//call this to read single value of each sensor.0
+			}//end if sring < 8
+			else{//srint > 8 so is a sensor reading.
+				serial_sensor_value_single();
+			}//end else srint > 8
+			i = i + 1;
+		}//end if( (rc) && (start_at_1 == true) )	
 
-		
-//if all trigger flags == 1 (nothing was detected) then turn off all LEDs and do not print anything.
-		if((one == 0) || (two == 0) || (three == 0) || (four == 0) || (five == 0) || (six == 0) || (seven == 0)){
-			Stop_Motors();
-		}
-		else{
-			Forward_Motors();	
-			WriteLed(0x0);}
+	}while(i < 14);/*14 readings to get number and value for each sensor. So 14*# readings want
+	+ 1 incase the readings started at a value and not the sensor number. */
+}
+
+
+/*******************************************************************************************************************************************
+This function takes the new srint value that is = 8+ and checks to see which sensor flag was set. If a sensor flag was set this means that
+the reading is the distance value for that sensor so the function will take the srint reading and set it equal to sonar#t if doing a single reading.
+*******************************************************************************************************************************************/
+void serial_sensor_value_single(void){
+	
+	if(srss1 == 0){/*if srss1 flag was set that meant the reading before was a 1 and this tells the loop
+	that the next reading is the distance reading for sensor 1.*/
+		sonar1t = srint;
+		reset_srss_flags();//reset flag for sonar reading.
+	}
+	else if(srss2 == 0){
+		sonar2t = srint;
+		reset_srss_flags();
+	}
+	else if(srss3 == 0){
+		sonar3t = srint;
+		reset_srss_flags();
+	}
+	else if(srss4 == 0){
+		sonar4t = srint;
+		reset_srss_flags();
+	}
+	else if(srss5 == 0){
+		sonar5t = srint;
+		reset_srss_flags();
+	}
+	else if(srss6 == 0){
+		sonar6t = srint;
+		reset_srss_flags();
+	}
+	else if(srss7 == 0){
+		sonar7t = srint;
+		reset_srss_flags();
+	}
+	else{}
+	
+}
+
+/********************************************************************************************************************************************
+This function takes the serial reading of triggered sensors and saves each corresonding sensor reading to sonar#t. Readings from serial come in as:
+sensor number
+sensor reading
+and repeates constantly.
+********************************************************************************************************************************************/
+void read_all_sensors_single_triggered(void){
+	i = 0;
+	do{
+		rc = ReadSerial(SONAR,&srchar);//reads serial from SONAR and puts in srchar
+		srint = (int)srchar;//convert char reading to integer
+		if(rc){//only run if rc == 1, meaning it successfully read a new value.
+			
+			if(srint < 8){//if srint less than 8 it is a sensor
+				serial_sensor_number_triggered();//call this to read single value of each sensor.0
+			}//end if sring < 8
+			else{//srint > 8 so is a sensor reading.
+				serial_sensor_value_single_triggered();
+			}//end else srint > 8
+			i = i + 1;
+		}//end if( (rc) && (start_at_1 == true) )	
+
+	}while(i < 14);/*14 readings to get number and value for each sensor. So 14*# readings want
+	+ 1 incase the readings started at a value and not the sensor number. */
+	
+}
+
+
+/*******************************************************************************************************************************************
+This function takes the new srint value that is = 8+ and checks to see which sensor flag was set. If a sensor flag was set and that sensors
+trigger flag was set this means that the reading is the distance value for that sensor so the function will take the srint reading and 
+set it equal to sonar#t if doing a single reading.
+*******************************************************************************************************************************************/
+void serial_sensor_value_single_triggered(void){
+	
+	if((srss1 == 0) && (one == 0)){/*if srss1 flag was set that meant the reading before was a 1 and this tells the loop
+	that the next reading is the distance reading for sensor 1.*/
+		sonar1t = srint;
+		reset_srss_flags();//reset flag for sonar reading.
+	}
+	else if((srss2 == 0) && (two == 0)){
+		sonar2t = srint;
+		reset_srss_flags();
+	}
+	else if((srss3 == 0) && (three == 0)){
+		sonar3t = srint;
+		reset_srss_flags();
+	}
+	else if((srss4 == 0) && (four == 0)){
+		sonar4t = srint;
+		reset_srss_flags();
+	}
+	else if((srss5 == 0) && (five == 0)){
+		sonar5t = srint;
+		reset_srss_flags();
+	}
+	else if((srss6 == 0) && (six == 0)){
+		sonar6t = srint;
+		reset_srss_flags();
+	}
+	else if((srss7 == 0) && (seven == 0)){
+		sonar7t = srint;
+		reset_srss_flags();
+	}
+	else{}
+	
+}
+
+
+/*******************************************************************************************************************************************
+This function takes the srint reading that we know is a sensor number and checks which sensor number it is and sets the corresponding flag.
+This allows us to know that the next serial reading will be the distance reading for that sensor.
+*******************************************************************************************************************************************/
+void serial_sensor_number(void){
+
+	if(srint == 1){/*If srint = the number of the sensor then that sensors srss1 flag
+	is set. srss# = serial read sonar sensor #. This will tell the next value, whose 
+	value will be greater than 8, that the reading is for that specific sensor.*/
+		srss1 = 0;
+	}
+	else if(srint == 2){
+		srss2 = 0;
+	}
+	else if(srint == 3){
+		srss3 = 0;
+	}
+	else if(srint == 4){
+		srss4 = 0;
+	}
+	else if(srint == 5){
+		srss5 = 0;
+	}
+	else if(srint == 6){
+		srss6 = 0;
+	}
+	else if(srint == 7){
+		srss7 = 0;
+	}
+	else{
+		srss1 = 1;
+		srss2 = 1;
+		srss3 = 1;
+		srss4 = 1;
+		srss5 = 1;
+		srss6 = 1;
+		srss7 = 1;
+	}
 
 }
+
+
+/*******************************************************************************************************************************************
+This function takes the srint reading that we know is a sensor number and checks which sensor number it is and checks to make sure that
+sensor was triggered and if so sets the corresponding flag. This allows us to know that the next serial reading will be the distance 
+reading for that sensor.
+*******************************************************************************************************************************************/
+void serial_sensor_number_triggered(void){
+	
+	if((srint == 1) && (one == 0)){/*If srint = the number of the sensor then that sensors srss1 flag
+	is set. srss# = serial read sonar sensor #. This will tell the next value, whose 
+	value will be greater than 8, that the reading is for that specific sensor.*/
+		srss1 = 0;
+	}
+	else if((srint == 2) && (two == 0)){
+		srss2 = 0;
+	}
+	else if((srint == 3) && (three == 0)){
+		srss3 = 0;
+	}
+	else if((srint == 4) && (four == 0)){
+		srss4 = 0;
+	}
+	else if((srint == 5) && (five == 0)){
+		srss5 = 0;
+	}
+	else if((srint == 6) && (six == 0)){
+		srss6 = 0;
+	}
+	else if((srint == 7) && (seven == 0)){
+		srss7 = 0;
+	}
+	else{
+		srss1 = 1;
+		srss2 = 1;
+		srss3 = 1;
+		srss4 = 1;
+		srss5 = 1;
+		srss6 = 1;
+		srss7 = 1;
+	}
+	
+}
+
+/***********************************************FUNCTIONS FOR READING ALL SENSORS AS ARRAY**************************************************/
+
+/********************************************************************************************************************************************
+This function takes the serial reading of sensor and saves each corresponding sensor reading in an array sonar# for a specific amount of 
+reading which is a multiple of 14. Must change number_readings value to how many readings of each sensor want to do.
+********************************************************************************************************************************************/
+void read_all_sensors_array(void){
+	
+	array_position = 0;
+	i = 0;
+	do{
+		rc = ReadSerial(SONAR,&srchar);//reads serial from SONAR and puts in srchar
+		srint = (int)srchar;//convert char reading to integer
+		if(rc){//only run if rc == 1, meaning it successfully read a new value.
+			
+			if(srint < 8){//if srint less than 8 it is a sensor
+				serial_sensor_number();//call this to read array of values of each sensor.
+				//printf("sonar%dt[%d] = ",srint,array_position);
+			}//end if sring < 8
+			else{//srint > 8 so is a sensor reading.
+				serial_sensor_value_array();
+			}//end else srint > 8
+			i = i + 1;
+		}//end if( (rc) && (start_at_1 == true) )	
+
+	}while(i < (number_readings*14));/*14 readings to get number and value for each sensor. So 14*# readings want
+	+ 1 incase the readings started at a value and not the sensor number. */
+
+}
+
+
+/*******************************************************************************************************************************************
+This function takes the new srint value that is = 8+ and checks to see which sensor flag was set. If a sensor flag was set this means that
+the reading is the distance value for that sensor so the function will take the srint reading and set it equal to sonar#[array_position]
+if doing an array reading.
+*******************************************************************************************************************************************/
+void serial_sensor_value_array(void){
+	
+	if(srss1 == 0){/*if srss1 flag was set that meant the reading before was a 1 and this tells the loop
+	that the next reading is the distance reading for sensor 1.*/
+		sonar1[array_position] = srint;//save the sensor reading in array.
+		reset_srss_flags();//reset flag for sonar reading.
+		all_sensors_read_check();
+	}
+	else if(srss2 == 0){
+		sonar2[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else if(srss3 == 0){
+		sonar3[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else if(srss4 == 0){
+		sonar4[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else if(srss5 == 0){
+		sonar5[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else if(srss6 == 0){
+		sonar6[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else if(srss7 == 0){
+		sonar7[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else{}
+	
+}
+
+
+/********************************************************************************************************************************************
+This function takes the serial reading of sensor and saves each corresponding sensor reading in an array sonar# for a specific amount of 
+reading which is a multiple of 14. Must change number_readings value to how many readings of each sensor want to do.
+********************************************************************************************************************************************/
+void read_all_sensors_array_triggered(void){
+	
+	array_position = 0;
+	i = 0;
+	do{
+		rc = ReadSerial(SONAR,&srchar);//reads serial from SONAR and puts in srchar
+		srint = (int)srchar;//convert char reading to integer
+		if(rc){//only run if rc == 1, meaning it successfully read a new value.
+			
+			if(srint < 8){//if srint less than 8 it is a sensor
+				serial_sensor_number_triggered();//call this to read array of values of each sensor.
+				//printf("sonar%dt[%d] = ",srint,array_position);
+			}//end if sring < 8
+			else{//srint > 8 so is a sensor reading.
+				serial_sensor_value_array_triggered();
+			}//end else srint > 8
+			i = i + 1;
+		}//end if( (rc) && (start_at_1 == true) )	
+
+	}while(i < (number_readings*14));/*14 readings to get number and value for each sensor. So 14*# readings want
+	+ 1 incase the readings started at a value and not the sensor number. */
+	
+}
+
+
+/*******************************************************************************************************************************************
+This function takes the new srint value that is = 8+ and checks to see which sensor flag was set. If a sensor flag was set this means that
+the reading is the distance value for that sensor. This also makes sure that the sensors trigger flag was set and if so the function will
+take the srint reading and set it equal to sonar#[array_position] if doing an array reading.
+*******************************************************************************************************************************************/	
+void serial_sensor_value_array_triggered(void){
+	
+	if((srss1 == 0) && (one == 0)){/*if srss1 flag was set that meant the reading before was a 1 and this tells the loop
+	that the next reading is the distance reading for sensor 1.*/
+		sonar1[array_position] = srint;//save the sensor reading in array.
+		reset_srss_flags();//reset flag for sonar reading.
+		all_sensors_read_check();
+	}
+	else if((srss2 == 0) && (two == 0)){
+		sonar2[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else if((srss3 == 0) && (three == 0)){
+		sonar3[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else if((srss4 == 0) && (four == 0)){
+		sonar4[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else if((srss5 == 0) && (five == 0)){
+		sonar5[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else if((srss6 == 0) && (six == 0)){
+		sonar6[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else if((srss7 == 0) && (seven == 0)){
+		sonar7[array_position] = srint;
+		reset_srss_flags();
+		all_sensors_read_check();
+	}
+	else{}
+	
+}
+
+/*********************************************************************************************************************
+
+
+*********************************************************************************************************************/
+
+
+
+
+
+
+
+
+
 /*********************************************************************************************************************/
 void button_L_R_PWM(void){
 /*flip SW9 up to control left motor, flip SW0 up to control right motor,

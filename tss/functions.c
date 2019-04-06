@@ -2,17 +2,17 @@
 #include "samr_driver.h"
 
 /********************************************************************************************************************/
-unsigned int Average_Reading(unsigned int sensor[]){
+unsigned int Average_Reading(unsigned int sensor[], int number_readings){
 	int k = 0;
 	unsigned int average = 0;
 	
-	for(k = 0; k < 1; ++k){
+	for(k = 0; k < number_readings; ++k){
 		//printf("SS 1: %d [in]\r\n\n",sensor[k]);
 		average = average + sensor[k];
 		sensor[k] = 0;
 	}
 	
-	average = average / 1;
+	average = average / number_readings;
 	return average;
 }
 /********************************************************************************************************************
