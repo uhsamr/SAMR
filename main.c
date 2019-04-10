@@ -4,6 +4,10 @@ Sponsor: Roscoe Furgeson (Ferguson Control Systems)
 Members: Brandon Kain, Matt Metoyer, Jaime Juarez & Matt Aguiano
 Semesters: Fall 2018 - Spring 2019
 Capstone Conference: 4/26/2019
+
+FPGA DIP Switch Configuration: MSEL[5:0] = 001010
+FPGA rbf file name: DE1_SoC_Computer.rbf
+
 */
 #include "samr_driver.h"
 #include "functions.h"
@@ -94,13 +98,13 @@ void read_all_sensors_array_triggered(void);
 int main() {
 
 	 init();
-	 number_readings = 2;
+	 number_readings = 2;//how many times to read all sensors in array
 	 WriteLed(0x0);//turn all LEDs off.		
 	 printroscoe();//print rOSCOE on displays
 	 Stop_Motors();//start motors at 3,800 (off)
 	
 	for(;;){
-		
+		printf("FOR LOOP RESTARTED\n\n");
 		read_all_sensors_single();
 		
 		/*ONLY NEED THIS WHEN DOING ARRAY READING*/
@@ -115,13 +119,13 @@ int main() {
 
 			
 		if(triggered == true){/*was a while statement, changing to if because code inside should fix triggered.*/
+			Stop_Motors();//stop motors to avoid / human detect
+			dutyl = 3800;//reset duty cycles to 3800, which is "0" point.
+			dutyr = 3800;
+			
 /*Wait 1[s] after triggered to let sensors steady so if it is a wall they get accurate and similar readings.*/
 			numberinms = 500;//NOT SURE IF THIS IS GOOD OR NOT
 			usleep( numberinms*1000 );//NOT SURE IF THIS IS GOOD OR NOT
-			
-			/*This function will take an array of reading for only triggered sensors and save the average of the
-			array into sonar#t for comparison to the temp value ss#t, which holds the initial triggered sensor reading.*/
-			read_all_sensors_single_triggered();
 
 			/*If the correct combination of sensors were triggered then go on to determine if wall or human, if not
 			then the code will simply rotate according to sensors that were triggered with avoid_objects();.*/
@@ -131,6 +135,12 @@ int main() {
 			/*This function will take the newest "sonar#t" value and compare it to the "ss#t" value ONLY for sensors
 			whose trigger flags were set (one, two etc.) and set the wall flag "ss#wall" or the person flag "ss#person"
 			depending on the values of the newest sensor reading (sonar#t) and the original triggered reading (ss#t).*/
+			printf("HUMANCHECKING\n\n");
+			
+			/*This function will take an array of reading for only triggered sensors and save the average of the
+			array into sonar#t for comparison to the temp value ss#t, which holds the initial triggered sensor reading.*/
+			read_all_sensors_single_triggered();
+
 /*
 SHOULD I CALL determine_wall_or_human(); MORE THAN ONCE INCASE THE READINGS WERE NOT STEADY AND IT WAS A WALL
 BUT THE SENSORS WERE NOT SETTLED ON THEIR READINGS? read_all_sensors_single_triggered(); and call determine_wall_or_human();
@@ -140,11 +150,12 @@ wall 3/5 times then we will set walldetected = true. if determined human 3/5 we 
 				determine_wall_or_human();//sets walldetected flag.
 			}//end if humancheck == true
 			else{//if those sensors were not triggered avoid objects.
+				printf("AVOIDING OBJECTS\n\n");
 				avoid_objects();
 			}//end else humancheck == false
 			
 			if((walldetected == true) && (humancheck == true)){
-
+				printf("WALL DETECTED\n\n");
 				sensor_4_triggered();
 				
 				sensor_1_and_7_triggered();
@@ -193,6 +204,7 @@ it will set flag to 0. Flag is active high.*/
 			ss1t = sonar1t;//save current value in triggered value to compare
 			one = 0;}//set sensor 1 trigger flag
 		else{one = 1;}
+		
 //sensor 2 (left middle)
 		if((sonar2t < 24) && (sonar2t > 8)){//if second sonar sensor reads less than 2 feet
 			printf("SS 2 triggered: %d [in]\r\n\n",sonar2t);
@@ -200,13 +212,15 @@ it will set flag to 0. Flag is active high.*/
 			ss2t = sonar2t;//save current value in temp to compare to.
 			two = 0;}
 		else{two = 1;}
+		
 //sensor 3 (left floor)
-		if((sonar3t > 57)){
+		if((sonar3t > 65)){
 			printf("SS 3 triggered: %d [in]\r\n\n",sonar3t);
 			LED = LED + 0x4;
 			ss3t = sonar3t;//save current value in temp to compare to.
 			three = 0;}
 		else{three = 1;}
+		
 //sensor 4 (middle middle)
 		if((sonar4t < 24) && (sonar4t > 8)){
 			printf("SS 4 triggered: %d [in]\r\n\n",sonar4t);
@@ -214,6 +228,7 @@ it will set flag to 0. Flag is active high.*/
 			ss4t = sonar4t;//save current value in temp to compare to.
 			four = 0;}
 		else{four = 1;}
+		
 //sensor 5 (right floor)
 		if((sonar5t > 57)){
 			printf("SS 5 triggered: %d [in]\r\n\n",sonar5t);
@@ -221,6 +236,7 @@ it will set flag to 0. Flag is active high.*/
 			ss5t = sonar5t;//save current value in temp to compare to.
 			five = 0;}
 		else{five = 1;}
+		
 //sensor 6 (right middle)
 		if((sonar6t < 24) && (sonar6t > 8)){
 			printf("SS 6 triggered: %d [in]\r\n\n",sonar6t);
@@ -228,6 +244,7 @@ it will set flag to 0. Flag is active high.*/
 			ss6t = sonar6t;//save current value in temp to compare to.
 			six = 0;}
 		else{six = 1;}
+		
 //sensor 7 (right corner)
 		if((sonar7t < 24) && (sonar7t > 8)){
 			printf("SS 7 triggered: %d [in]\r\n\n",sonar7t);
@@ -241,18 +258,14 @@ it will set flag to 0. Flag is active high.*/
 		/*IF ONLY SENSOR 1 OR SENSOR 7 SET DO NOT STOP OR SET TRIGGERED FLAG*/
 		if(( (one == 0) || (seven == 0) ) && ( (three == 1) && (four == 1) && (five == 1) && (six == 1) && (two == 1) )){
 			Forward_Motors();	
-			WriteLed(0x0);
 			triggered = false;
 		}
 		else if((one == 0) || (two == 0) || (three == 0) || (four == 0) || (five == 0) || (six == 0) || (seven == 0)){
-			Stop_Motors();
-			dutyl = 3800;
-			dutyr = 3800;
 			triggered = true;
 		}
 		else{//if all trigger flags == 1 (nothing was detected) then turn off all LEDs and do not print anything.
 			Forward_Motors();	
-			WriteLed(0x0);
+			printf("MOTORS FORWARD\n\n");
 			triggered = false;
 		}
 }// END check_if_anything_detected
@@ -329,15 +342,15 @@ unsigned int ss1person = 1, ss2person = 1, ss3person = 1, ss4person = 1, ss5pers
 /************************************************************************/	
 //								SENSOR 1
 if(one == 0){//if the first sensor was initially triggered
-				/*If ss1t (the sonar reading value that triggered the detection is equal to, +1 or -1 the values
+				/*If ss1t (the sonar reading value that triggered the detection is equal to, +2 or -2 the values
 				of sonar1t (the most recent reading of sonar 1) then the sensor detected a wall */
-				if((ss1t == sonar1t) || (ss1t == (sonar1t+1)) || (ss1t == (sonar1t-1))) {//wall detected
+				if((ss1t == sonar1t) || (ss1t == (sonar1t+2)) || (ss1t == (sonar1t-2))) {//wall detected
 					ss1wall = 0;//set wall flag for sensor 1 (active low)
 					ss1person = 1;//make sure person flag for sensor 1 is not triggered
 					printf("SS 1 detected a wall! SS1 reading = %d[in]\r\n\n", sonar1t);
 				}
 				else{//object detected
-					/*If the newest sensor reading is not within 1[in] of the triggered reading then chances
+					/*If the newest sensor reading is not within 2[in] of the triggered reading then chances
 					are that it was a passing person or a person standing there looking giving inconsistent readings.*/
 					ss1wall = 1;
 					ss1person = 0;
@@ -351,7 +364,7 @@ else{
 /************************************************************************/	
 //								SENSOR 2
 if(two == 0){
-				if((ss2t == sonar2t) || (ss2t == (sonar2t+1)) || (ss1t == (sonar2t-1))){
+				if((ss2t == sonar2t) || (ss2t == (sonar2t+2)) || (ss1t == (sonar2t-2))){
 					ss2wall = 0;//active low
 					ss2person = 1;
 				}
@@ -367,7 +380,7 @@ else{
 /************************************************************************/	
 //								SENSOR 3
 if(three == 0){
-				if((ss3t == sonar3t) || (ss3t == (sonar3t+1)) || (ss1t == (sonar3t-1))){
+				if((ss3t == sonar3t) || (ss3t == (sonar3t+2)) || (ss1t == (sonar3t-2))){
 					ss3wall = 0;
 					ss3person = 1;
 				}
@@ -383,7 +396,7 @@ else{
 /************************************************************************/	
 //								SENSOR 4
 if(four == 0){
-				if((ss4t == sonar4t) || (ss4t == (sonar4t+1)) || (ss4t == (sonar4t-1))){
+				if((ss4t == sonar4t) || (ss4t == (sonar4t+2)) || (ss4t == (sonar4t-2))){
 					ss4wall = 0;
 					ss4person = 1;
 				}
@@ -399,7 +412,7 @@ else{
 /************************************************************************/	
 //								SENSOR 5
 if(five == 0){
-				if((ss5t == sonar5t) || (ss5t == (sonar5t+1)) || (ss5t == (sonar5t-1))){
+				if((ss5t == sonar5t) || (ss5t == (sonar5t+2)) || (ss5t == (sonar5t-2))){
 					ss5wall = 0;
 					ss5person = 1;
 				}
@@ -415,7 +428,7 @@ else{
 /************************************************************************/	
 //								SENSOR 6
 if(six == 0){
-				if((ss6t == sonar6t) || (ss6t == (sonar6t+1)) || (ss6t == (sonar6t-1))){
+				if((ss6t == sonar6t) || (ss6t == (sonar6t+2)) || (ss6t == (sonar6t-2))){
 					ss6wall = 0;
 					ss6person = 1;
 				}
@@ -431,7 +444,7 @@ else{
 /************************************************************************/	
 //								SENSOR 7
 if(seven == 0){
-				if((ss7t == sonar7t) || (ss7t == (sonar7t+1)) || (ss7t == (sonar7t-1))){
+				if((ss7t == sonar7t) || (ss7t == (sonar7t+2)) || (ss7t == (sonar7t-2))){
 					ss7wall = 0;
 					ss7person = 1;
 				}
@@ -462,8 +475,6 @@ If it is in this range it adds 50 to increase reverse speed. After sets both PWM
 *********************************************************************************************************************/
 void turn_right(void){
 	
-	printf("TURNING RIGHT!\r\n\n");
-	
 	/*To turn right left motor goes forward. Anything less than 3,800 is forward speed. Max forward speed can be
 	2,600. This means dutyl cannot be less than 2,600.*/
 	if(dutyl < 2600){
@@ -488,6 +499,8 @@ void turn_right(void){
 		dutyr = dutyr + 50;
 	}
 	
+	printf("TURNING RIGHT, dutyl = %d & dutyr = %d\r\n\n",dutyl,dutyr);
+	
 	WritePWM(PWMl,ACTIVATE_PWM + dutyl);
 	WritePWM(PWMr,ACTIVATE_PWM + dutyr);
 	
@@ -502,6 +515,9 @@ to make sure it is more than 3,800 (because reverse speed is higher number), but
 If it is in this range it adds 50 to increase reverse speed. After sets both PWMl and PWMr to active + dutycycle.
 *********************************************************************************************************************/
 void turn_left(void){
+	
+	printf("TURNING LEFT, dutyl = %d & dutyr = %d\r\n\n",dutyl,dutyr);
+		
 	/*To turn left right motor goes forward. Anything less than 3,800 is forward speed. Max forward speed can be
 	2,600. This means dutyr cannot be less than 2,600.*/
 	if(dutyr < 2600){
