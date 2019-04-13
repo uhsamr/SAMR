@@ -11,6 +11,7 @@ FPGA rbf file name: DE1_SoC_Computer.rbf
 */
 #include "samr_driver.h"
 #include "functions.h"
+#include "autonomous.h"
 
 /********************************************GLOBAL VARIABLE DECLARATIONS********************************************/
 int numberinms = 0, pushed = 0, i = 0, j = 0, k = 0;
@@ -18,12 +19,6 @@ int srint, numberinms, LED, rc, allsensorsread = 0, start_at_1 = 1, array_positi
 char srchar;
 unsigned int switches, buttons, number_readings;
 int srss1 = 1, srss2 = 1, srss3 = 1, srss4 = 1, srss5 = 1, srss6 = 1, srss7 = 1;//active low (srss# = serial read sonar sensor #
-//these variables save the current value of each sensor
-unsigned int ss1, ss2, ss3, ss4, ss5, ss6, ss7;
-//trigger vatiable if sensor detected a wall (active low)
-unsigned int ss1wall = 1, ss2wall = 1, ss3wall = 1, ss4wall = 1, ss5wall = 1, ss6wall = 1, ss7wall = 1;
-//trigger variable if sensor detected a person (active low)
-unsigned int ss1person = 1, ss2person = 1, ss3person = 1, ss4person = 1, ss5person = 1, ss6person = 1, ss7person = 1;
 //These variables save the current sensor average values and are used to check if anything was detected.
 unsigned int sonar1t, sonar2t, sonar3t, sonar4t, sonar5t, sonar6t, sonar7t;
 //these are arrays used to take average of readings of sensors for more accurate reading.
@@ -35,18 +30,16 @@ unsigned int ss1ave, ss2ave, ss3ave, ss4ave, ss5ave, ss6ave, ss7ave;
 //these are flag variables for each sensor. flags are active low meaning if it equal 0 then it was triggered. safe state is 1.
 int one = 1, two = 1, three = 1, four = 1, five = 1, six = 1, seven = 1;
 //these are arrays of 100 readings to take average and see if person or wall detected.
-unsigned int ss1temp[100], ss2temp[100];
 unsigned int dutyl = 3800, dutyr = 3800;//start both duty cycles at off.
 bool triggered = false;
 bool walldetected = false;
 bool humancheck = false;
+bool breakcode = false;
+char input;
+int serial1, skip = 0;
 /********************************************END GLOBAL VARIABLE DECLARATIONS********************************************/
 
 /*************************************************FUNCTION DECLARATIONS*************************************************/
-void button_L_R_PWM(void);
-
-void switch_controlled_duty_cycle(void);
-
 void check_if_anything_detected(void);
 
 void turn_right(void);
@@ -85,76 +78,145 @@ void read_all_sensors_single_triggered(void);
 
 void read_all_sensors_array_triggered(void);
 
+void check_serial1(void);
+
 void reset_duty_and_stop_motors(void);
 /***********************************************END FUNCTION DECLARATIONS***********************************************/
  
 /**************************************************START MAIN FUNCTION**************************************************/
-int main() {
+void autonomous(void){
 
-	 init();
-	 number_readings = 2;//how many times to read all sensors in array
-	 WriteLed(0x0);//turn all LEDs off.		
-	 printroscoe();//print rOSCOE on displays
-	 Stop_Motors();//start motors at 3,800 (off)
+	skip = 0;
+	printf("inside autonomous function\n\n");
+	//init();
+	number_readings = 2;//how many times to read all sensors in array
+	WriteLed(0x0);//turn all LEDs off.		
+	printroscoe();//print rOSCOE on displays
+	Stop_Motors();//start motors at 3,800 (off)
 	
 	for(;;){
+	
 		printf("FOR LOOP RESTARTED\n\n");
 		read_all_sensors_single();
-
+		if(breakcode == true){
+			breakcode = false;
+			break;
+		}
 		/*This function takes all "sonar#t" values and checks to see if they detected anything within their
-		range, if so it sets that sensors flag and saves the "sonar#t" value to a "sonar#t" variable. If sonar1t 
+		range, if so it sets that sensors flag and saves the "sonar#t" value to a "ss#t" variable. If sonar1t 
 		detected something then ss1t saves sonar1t value and the flag "one" will be set to 0 becuase the flags 
-		are active low. This will also set the triggered flag to true if ANY sensor flag is set.*/
+		are active low. This will also set the triggered flag to true.*/
 		check_if_anything_detected();
+		if(breakcode == true){
+			breakcode = false;
+			break;
+		}
 
 			
-		while(triggered == true){/*.*/
+		while(triggered == true){
+			/*If we made it to here this means sensors were triggered and must stop motors.*/
 			reset_duty_and_stop_motors();
 			
 			//numberinms = 500;//NOT SURE IF THIS IS GOOD OR NOT
 			//usleep( numberinms*1000 );//NOT SURE IF THIS IS GOOD OR NOT
 
-			/*triggered is already set, but we stopped motors and read all sensors and check if anything detected again
-			to make sure. If not then will skip all avoiding functions and read one more ti
-			me before breaking while loop.*/
+			/*triggered is already set, but we need to read all sensors and check if anything detected again
+			to make sure. If not then will skip all avoiding functions and read one more time before breaking while loop.*/
 			read_all_sensors_single();
+			
+			if(breakcode == true){
+				breakcode = false;
+				break;
+			}
+			
 			check_if_anything_detected();
+			
+			if(breakcode == true){
+				breakcode = false;
+				break;
+			}
 
-			if(triggered == true){
-				printf("running sensor_4_triggered\n\n");
+			if(triggered == true){//if sensors still triggered run avoidance functions.
+				//printf("running sensor_4_triggered\n\n");
 				sensor_4_triggered();
-
-				printf("running avoid_objects\n\n");
+				if(breakcode == true){
+					breakcode = false;
+					break;
+				}
+					
+				//printf("running avoid_objects\n\n");
 				avoid_objects();
-				
-				printf("running sensor_1_and_7_triggered\n\n");
+				if(breakcode == true){
+					breakcode = false;
+					break;
+				}
+					
+				//printf("running sensor_1_and_7_triggered\n\n");
 				sensor_1_and_7_triggered();
+				if(breakcode == true){
+					breakcode = false;
+					break;
+				}
 			}
-			else{
-			}
+			else{}
 			
 			reset_duty_and_stop_motors();
 			
 			read_all_sensors_single();
+			if(breakcode == true){
+				breakcode = false;
+				break;
+			}
+			
 			check_if_anything_detected();
+			if(breakcode == true){
+				breakcode = false;
+				break;
+			}
 		
 		}//end while triggered == true;
 		
 		Forward_Motors();	
 		
 	}//end for(;;)
-return(0);}
+
+}
 /***************************************************END MAIN FUNCTION***************************************************/
+
+
+/*********************************************************************************************************************
+This function checks skip flag, because the first run through autonomous we do not want to check serial reading from
+remote control because it messes up. If skip == 1 then read serial and if serial successfully read something it will 
+see if it read 'n' which is button for remote control and if so will set breakcode to true, which is checked in main loop
+to break out of main code and go back to remote control function.
+*********************************************************************************************************************/
+void check_serial1(void){
+		if(skip == 1){
+			//printf("inside for(;;) loop inside autonomous code\n\n");
+			serial1 = ReadSerial(SER1, &input);
+
+			if(serial1 == 1){
+				//printf("serial1: %d\n\n", serial1);
+				if(input == 'n'){
+					breakcode = true;
+					printf("input: %c\n\n", input);  //FIGURE OUT WHY 'd' IS NOT STORED IN recvChar.
+				}
+			}
+		}
+		else{
+			skip = 1;
+		}
+}
+
 
 /*********************************************************************************************************************
 This function takes the sonar#t values and checks if any of the sensors readings are within the specified range for
-detection. If any sensor reading is in detection range then the value will be saved in ss#t, this is a trigger saving
-to be compared later. If sensor detect then their corresponding trigger flag will also be set. This variable corresonds
+detection. If a sensor detected something then their corresponding trigger flag will be set. This variable corresonds
 to the number of sensor. If sensor 1 detected something then flag "one" will be set. Flags are active low (0 = set).
 If any of the flags were set then this function sets "triggered" = true.
 *********************************************************************************************************************/
 void check_if_anything_detected(void){
-	
+//printf("inside check_if_anything_detected\n\n");
 /*If a sensor reads something less than 24 inches away it will set the corresponding
 flag by setting the number sensor it is equal to 1. If a sensor doesnt detect anything
 it will set flag to 0. Flag is active high.*/
@@ -231,6 +293,9 @@ it will set flag to 0. Flag is active high.*/
 			//printf("MOTORS FORWARD\n\n");
 			triggered = false;
 		}
+		
+		check_serial1();
+		
 }// END check_if_anything_detected
 
 
@@ -327,21 +392,22 @@ void avoid_objects(void){
 	too into the path of samr then sensors 2 or 6 will also trigger, which will trigger the humancheck flag.*/
 	while(((three == 0) && (five == 0)) || (three == 0) || ((one == 0) && (two == 0)) || (two == 0) ){//line 5, 6 & 9 Sensor Scenarios for SAMR
 		turn_right();//starts turning motors
-		read_all_sensors_single();//checks only sensors that were triggered.
-		/*only sensors that were triggered were checked again so only those flags will be changed.*/
+		read_all_sensors_single();
 		check_if_anything_detected();
-		usleep(250*1000);
-		//rotate right
+		check_serial1();
+		
+		if(breakcode == true){break;}
 		}//end while
 
 	reset_duty_and_stop_motors();
 				
-	while((five == 0) || ((six == 0) && (seven == 0))){//line 7 & 8 Sensor Scenarios for SAMR
+	while((five == 0) || ((six == 0) && (seven == 0)) || (six == 0)){//line 7 & 8 Sensor Scenarios for SAMR
 		turn_left();//starts turning motors
 		read_all_sensors_single();//only reads sensors triggered and changes their sonar#t value
 		check_if_anything_detected();//takes new sonar#t value of triggered sensors and updates triggered flags.
-		//rotate left
-		usleep(250*1000);
+		check_serial1();
+		
+		if(breakcode == true){break;}
 	}//end while
 	
 	reset_duty_and_stop_motors();
@@ -349,21 +415,21 @@ void avoid_objects(void){
 
 
 /********************************************************************************************************************
-This function is called if walldetected and humancheck are both true. It stays in a while loop as long as sensor 4's
-wall trigger is set. It then checks other sensors wall trigger flags to move accordingly. Each run the function makes
-sure sensor 4 wall trigger is still set. Checks other sensors wall trigger flags. Moves motors accordingly. Reads
-all sensors triggered again to update sonar#t values. Determines if the wall is avoided by seeing if new sonar# reading
-is still within the range that triggered it.
+This function is called and if sensor four flag was triggered it will then check other different cases of sensor
+flags triggered to determine if it should turn left or right. If at any point sensor four is no longer triggered
+it will leave the while loop and reset motors.
 ********************************************************************************************************************/
 void sensor_4_triggered(void){
 	reset_duty_and_stop_motors();
 	
-	while(four == 0){/*All of these sensor scenarios will only happen if ss4 detected a wall 
-	also becuase it is the middle sensor and must be triggered in order to check for a person.*/
+	while(four == 0){
+		/*All sensor are being check now, so as long as four is still being triggered it does not matter what other
+		sensor were now triggered it will stay in this loop and only act on the sensor combinations being checked here.*/
 		if((two == 0) && (six == 0) && (seven == 0)){//line 15
 			turn_left();//starts turning motors left.
+			/*read all sensors again*/
 			read_all_sensors_single();
-			/*only reads sensors whose flags were set and updates their sonar#t value to be checked again*/
+			/*check if anthing detected*/
 			check_if_anything_detected();
 		}
 		else if((one == 0) && (two == 0) && (six == 0)){//line 16 Sensor Scenarios for SAMR
@@ -400,7 +466,9 @@ void sensor_4_triggered(void){
 			read_all_sensors_single();
 			check_if_anything_detected();
 		}
-		usleep(250*1000);
+		check_serial1();
+		
+		if(breakcode == true){break;}
 	}//end while ss4 detects a wall
 	
 	reset_duty_and_stop_motors();
@@ -409,8 +477,10 @@ void sensor_4_triggered(void){
 
 
 /********************************************************************************************************************
-
-
+Usually if sensor 1 or 7 are triggered we do not worry about avoiding them becuase they are pointing to side. However,
+if both of them are triggered this means the robot might have a tight space coming up. This function will run as long
+as sensor 1 and 7 are triggered and check for sensor two and six, which are next to 1 and 7 and will detect stuff in
+the way. If only 1 and 7 then go forward to try going between whatever it is, if sensor 2 or 6 detect then correct it.
 ********************************************************************************************************************/
 void sensor_1_and_7_triggered(void){
 	reset_duty_and_stop_motors();
@@ -445,8 +515,11 @@ THOSE SENSORS INTO ACCOUNT FOR AVOIDING THE WALL??????
 			check_if_anything_detected();
 		}
 		else{//only sensor 1 & 7 detected something?
+			Forward_Motors();
 		}
-		usleep(250*1000);
+		check_serial1();
+		
+		if(breakcode == true){break;}
 	}//end if ss1 & ss7 detected a wall	
 
 	reset_duty_and_stop_motors();
@@ -512,7 +585,7 @@ sensor reading
 and repeates constantly.
 ********************************************************************************************************************************************/
 void read_all_sensors_single(void){
-
+//printf("inside read_all_sensors_single\n\n");
 	i = 0;
 	do{
 		rc = ReadSerial(SONAR,&srchar);//reads serial from SONAR and puts in srchar
@@ -526,7 +599,11 @@ void read_all_sensors_single(void){
 				serial_sensor_value_single();
 			}//end else srint > 8
 			i = i + 1;
-		}//end if( (rc) && (start_at_1 == true) )	
+		}//end if( (rc) && (start_at_1 == true) )
+
+		check_serial1();
+		
+		if(breakcode == true){break;}			
 
 	}while(i < 14);/*14 readings to get number and value for each sensor. So 14*# readings want
 	+ 1 incase the readings started at a value and not the sensor number. */
@@ -538,7 +615,7 @@ This function takes the new srint value that is = 8+ and checks to see which sen
 the reading is the distance value for that sensor so the function will take the srint reading and set it equal to sonar#t if doing a single reading.
 *******************************************************************************************************************************************/
 void serial_sensor_value_single(void){
-	
+//printf("inside serial_sensor_value_single\n\n");
 	if(srss1 == 0){/*if srss1 flag was set that meant the reading before was a 1 and this tells the loop
 	that the next reading is the distance reading for sensor 1.*/
 		sonar1t = srint;
@@ -571,7 +648,6 @@ void serial_sensor_value_single(void){
 	else{}
 	
 }
-
 
 /********************************************************************************************************************************************
 This function takes the serial reading of triggered sensors and saves each corresonding sensor reading to sonar#t. Readings from serial come in as:
@@ -647,7 +723,7 @@ This function takes the srint reading that we know is a sensor number and checks
 This allows us to know that the next serial reading will be the distance reading for that sensor.
 *******************************************************************************************************************************************/
 void serial_sensor_number(void){
-
+//printf("inside serial_sensor_number\n\n");
 	if(srint == 1){/*If srint = the number of the sensor then that sensors srss1 flag
 	is set. srss# = serial read sonar sensor #. This will tell the next value, whose 
 	value will be greater than 8, that the reading is for that specific sensor.*/
@@ -881,9 +957,10 @@ void serial_sensor_value_array_triggered(void){
 	
 }
 
+
 /*********************************************************************************************************************
-
-
+This function resets the dutyl and dutyr to 3800, which is "stopped" so can start turning left or right from stopped.
+It also sets the PWMl and PWMr to stopped positions.
 *********************************************************************************************************************/
 void reset_duty_and_stop_motors(void){
 	Stop_Motors();//stop motors to avoid / human detect
@@ -892,110 +969,8 @@ void reset_duty_and_stop_motors(void){
 }
 
 
+/*********************************************************************************************************************
 
 
+*********************************************************************************************************************/
 
-
-
-
-/*********************************************************************************************************************/
-void button_L_R_PWM(void){
-/*flip SW9 up to control left motor, flip SW0 up to control right motor,
-flip SW1 up to stop both motors. Press KEY3 to decrease speed, press 
-KEY2 to increase speed*/
-		buttons = ReadKeys();
-		switches = ReadSwitches();
-		if(switches == 0x200){//SW9 up to control left motor
-			if((buttons == 0x7) && (pushed == 0)){//KEY3 increases duty cycle
-				dutyl = dutyl + 100;
-				pushed = 1;
-			}
-			else if((buttons == 0xB) && (pushed == 0)){//KEY2 decreases duty cycle
-				dutyl = dutyl - 100;
-				pushed = 1;
-			}
-			else if(pushed == 1){//if either button was pressed check to see if it was released.
-				if(buttons == 0xF){pushed =0;}
-				else{pushed = 1;}
-			}
-			else{pushed = 0;}//do nothing if no buttons pressed
-			if(dutyl > 5000){dutyl = 5000;}
-			else if(dutyl < 0){dutyl = 0;}
-			else{}
-			WritePWM(PWMl,ACTIVATE_PWM + dutyl);
-		}
-		else if(switches == 0x1){//SW0 up to control right motor
-			if((buttons == 0x7) && (pushed == 0)){//KEY3 increases duty cycle
-				dutyr = dutyr + 100;
-				pushed = 1;
-			}
-			else if((buttons == 0xB) && (pushed == 0)){//KEY2 decreases duty cycle
-				dutyr = dutyr - 100;
-				pushed = 1;
-			}
-			else if(pushed == 1){//if either button was pressed check to see if it was released.
-				if(buttons == 0xF){pushed =0;}
-				else{pushed = 1;}
-			}
-			else{pushed = 0;}//do nothing if no buttons pressed
-			if(dutyr > 5000){dutyr = 5000;}
-			else if(dutyr < 0){dutyr = 0;}
-			else{}
-			WritePWM(PWMr,ACTIVATE_PWM + dutyr);
-		}
-		else if(switches == 0x2){//SW1 turns both motors off
-			WritePWM(PWMl,STOP_DUTY);
-			WritePWM(PWMr,STOP_DUTY);
-		}
-		else{//no switches up leave them as is
-			WritePWM(PWMl,ACTIVATE_PWM + dutyl);
-			WritePWM(PWMr,ACTIVATE_PWM + dutyr);
-		}	
-}
-/*********************************************************************************************************************/
-void switch_controlled_duty_cycle(void){
-	unsigned int duty;
-	unsigned int switches;
-	switches = ReadSwitches();
-	WriteLed(ReadSwitches());
-	switch(switches){
-		case 0x0:
-		duty = 1;
-		break;
-		case 0x1:
-		duty = 500;
-		break;
-		case 0x2:
-		duty = 1000;
-		break;
-		case 0x4:
-		duty = 1500;
-		break;
-		case 0x8:
-		duty = 2000;
-		break;
-		case 0x10:
-		duty = 2500;
-		break;
-		case 0x20:
-		duty = 3000;
-		break;
-		case 0x40:
-		duty = 3500;
-		break;
-		case 0x80:
-		duty = 4000;
-		break;
-		case 0x100:
-		duty = 4500;
-		break;
-		case 0x200:
-		duty = 4999;//MAX FORWARD DUTY CYCLE 3.2[V] OUTPUT
-		break;
-		default:
-		duty = 0;
-		break;
-	}//end switch statement
-	WritePWM(PWM1,ACTIVATE_PWM + duty);	
-}
-/*********************************************************************************************************************/
