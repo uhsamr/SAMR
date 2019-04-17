@@ -8,6 +8,12 @@ Capstone Conference: 4/26/2019
 FPGA DIP Switch Configuration: MSEL[5:0] = 001010
 FPGA rbf file name: DE1_SoC_Computer.rbf
 
+Website for Remote Control:
+file:///C:/Users/uhsam/Downloads/SAMR_UI.html
+
+TX left
+RX right
+
 */
 #include "samr_driver.h"
 #include "functions.h"
@@ -37,6 +43,12 @@ bool humancheck = false;
 bool breakcode = false;
 char input;
 int serial1, skip = 0;
+
+int                server, j, client;
+socklen_t          addrSize;
+struct sockaddr_in serverAddr, clientAddr;
+char               data;
+
 /********************************************END GLOBAL VARIABLE DECLARATIONS********************************************/
 
 /*************************************************FUNCTION DECLARATIONS*************************************************/
@@ -81,6 +93,8 @@ void read_all_sensors_array_triggered(void);
 void check_serial1(void);
 
 void reset_duty_and_stop_motors(void);
+
+void check_realsense(void);
 /***********************************************END FUNCTION DECLARATIONS***********************************************/
  
 /**************************************************START MAIN FUNCTION**************************************************/
@@ -94,8 +108,21 @@ void autonomous(void){
 	printroscoe();//print rOSCOE on displays
 	Stop_Motors();//start motors at 3,800 (off)
 	
+	//START TCPServer_linux
+	memset(&serverAddr, 0, sizeof(serverAddr));//clear socket address
+	serverAddr.sin_family      = AF_INET;      //IPv4 address
+	serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);//don't care network interface
+	serverAddr.sin_port        = htons(9999); //bind to port 9999
+	addrSize                   = sizeof(clientAddr);
+
+	server = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP); //Allocate TCP socket
+	bind(server, (struct sockaddr *) &serverAddr, sizeof(serverAddr)); //(*@\serverBox{1)}@*)
+	listen(server, 5);  //(*@\serverBox{2)}@*)
+	//END TCPServer_linus
+	
 	for(;;){
 	
+		check_realsense();
 		printf("FOR LOOP RESTARTED\n\n");
 		read_all_sensors_single();
 		if(breakcode == true){
@@ -222,7 +249,7 @@ flag by setting the number sensor it is equal to 1. If a sensor doesnt detect an
 it will set flag to 0. Flag is active high.*/
 		LED = 0;
 //sensor 1 (left corner)
-		if((sonar1t < 24) && (sonar1t > 8)){//if first sonar sensor reads less than 2 feet
+		if((sonar1t < 24) && (sonar1t >= 8)){//if first sonar sensor reads less than 2 feet
 			printf("SS 1 triggered: %d [in]\r\n\n",sonar1t);
 			LED = LED + 0x1;
 			ss1t = sonar1t;//save current value in triggered value to compare
@@ -230,7 +257,7 @@ it will set flag to 0. Flag is active high.*/
 		else{one = 1;}
 		
 //sensor 2 (left middle)
-		if((sonar2t < 24) && (sonar2t > 8)){//if second sonar sensor reads less than 2 feet
+		if((sonar2t < 24) && (sonar2t >= 8)){//if second sonar sensor reads less than 2 feet
 			printf("SS 2 triggered: %d [in]\r\n\n",sonar2t);
 			LED = LED + 0x2;
 			ss2t = sonar2t;//save current value in temp to compare to.
@@ -238,7 +265,7 @@ it will set flag to 0. Flag is active high.*/
 		else{two = 1;}
 		
 //sensor 3 (left floor)
-		if((sonar3t > 65)){
+		if((sonar3t > 59)){
 			printf("SS 3 triggered: %d [in]\r\n\n",sonar3t);
 			LED = LED + 0x4;
 			ss3t = sonar3t;//save current value in temp to compare to.
@@ -246,7 +273,7 @@ it will set flag to 0. Flag is active high.*/
 		else{three = 1;}
 		
 //sensor 4 (middle middle)
-		if((sonar4t < 24) && (sonar4t > 8)){
+		if((sonar4t < 24) && (sonar4t >= 8)){
 			printf("SS 4 triggered: %d [in]\r\n\n",sonar4t);
 			LED = LED + 0x8;
 			ss4t = sonar4t;//save current value in temp to compare to.
@@ -254,7 +281,7 @@ it will set flag to 0. Flag is active high.*/
 		else{four = 1;}
 		
 //sensor 5 (right floor)
-		if((sonar5t > 57)){
+		if((sonar5t > 41)){
 			printf("SS 5 triggered: %d [in]\r\n\n",sonar5t);
 			LED = LED + 0x10;
 			ss5t = sonar5t;//save current value in temp to compare to.
@@ -262,7 +289,7 @@ it will set flag to 0. Flag is active high.*/
 		else{five = 1;}
 		
 //sensor 6 (right middle)
-		if((sonar6t < 24) && (sonar6t > 8)){
+		if((sonar6t < 24) && (sonar6t >= 8)){
 			printf("SS 6 triggered: %d [in]\r\n\n",sonar6t);
 			LED = LED + 0x20;
 			ss6t = sonar6t;//save current value in temp to compare to.
@@ -270,7 +297,7 @@ it will set flag to 0. Flag is active high.*/
 		else{six = 1;}
 		
 //sensor 7 (right corner)
-		if((sonar7t < 24) && (sonar7t > 8)){
+		if((sonar7t < 24) && (sonar7t >= 8)){
 			printf("SS 7 triggered: %d [in]\r\n\n",sonar7t);
 			LED = LED + 0x40;
 			ss7t = sonar7t;//save current value in temp to compare to.
@@ -313,8 +340,8 @@ void turn_right(void){
 	if(dutyl < 2600){
 		dutyl = 2600;
 	}
-	else if(dutyl > 3800){
-		dutyl = 3800;
+	else if(dutyl > HAULT){
+		dutyl = HAULT;
 	}
 	else{
 		dutyl = dutyl - 50;
@@ -322,11 +349,11 @@ void turn_right(void){
 	
 	/*To turn right right motor goes backwards. Anything more than 3,800 is backwards, but max is 4,9999. dutyr must
 	be at least 3,800+*/
-	if(dutyr < 3800){
-		dutyr = 3800;
+	if(dutyr < HAULT){
+		dutyr = HAULT;
 	}
-	else if(dutyr > 4999){
-		dutyr = 4999;
+	else if(dutyr > 4949){
+		dutyr = 4949;
 	}
 	else{
 		dutyr = dutyr + 50;
@@ -356,8 +383,8 @@ void turn_left(void){
 	if(dutyr < 2600){
 		dutyr = 2600;
 	}
-	else if(dutyr > 3800){
-		dutyr = 3800;
+	else if(dutyr > HAULT){
+		dutyr = HAULT;
 	}
 	else{
 		dutyr = dutyr - 50;
@@ -365,11 +392,11 @@ void turn_left(void){
 	
 	/*To turn left left motor goes backwards. Anything more than 3,800 is backwards, but max is 4,9999. dutyl must
 	be at least 3,800+*/
-	if(dutyl < 3800){
-		dutyl = 3800;
+	if(dutyl < HAULT){
+		dutyl = HAULT;
 	}
-	else if(dutyl > 4999){
-		dutyl = 4999;
+	else if(dutyl > 4949){
+		dutyl = 4949;
 	}
 	else{
 		dutyl = dutyl + 50;
@@ -395,7 +422,7 @@ void avoid_objects(void){
 		read_all_sensors_single();
 		check_if_anything_detected();
 		check_serial1();
-		
+		check_realsense();
 		if(breakcode == true){break;}
 		}//end while
 
@@ -406,7 +433,7 @@ void avoid_objects(void){
 		read_all_sensors_single();//only reads sensors triggered and changes their sonar#t value
 		check_if_anything_detected();//takes new sonar#t value of triggered sensors and updates triggered flags.
 		check_serial1();
-		
+		check_realsense();
 		if(breakcode == true){break;}
 	}//end while
 	
@@ -425,6 +452,7 @@ void sensor_4_triggered(void){
 	while(four == 0){
 		/*All sensor are being check now, so as long as four is still being triggered it does not matter what other
 		sensor were now triggered it will stay in this loop and only act on the sensor combinations being checked here.*/
+		check_realsense();
 		if((two == 0) && (six == 0) && (seven == 0)){//line 15
 			turn_left();//starts turning motors left.
 			/*read all sensors again*/
@@ -499,6 +527,7 @@ TRIGGERED THE ROBOT WILL STOP AVOIDING. SHOULD I MAKE THE WHILE ABOVE AND IF AND
 WHILE LOOPS SO THE SS1 AND SS7 GIVE US THE SITUATION THE ROBOT IS IN AND THE BELOW STATEMENTS WILL TAKE
 THOSE SENSORS INTO ACCOUNT FOR AVOIDING THE WALL??????
 */
+		check_realsense();
 		if((two == 0) && (six == 0)){//line 20 Sensor Scenarios for SAMR
 			turn_right();
 			read_all_sensors_single();
@@ -964,8 +993,8 @@ It also sets the PWMl and PWMr to stopped positions.
 *********************************************************************************************************************/
 void reset_duty_and_stop_motors(void){
 	Stop_Motors();//stop motors to avoid / human detect
-	dutyl = 3800;//reset duty cycles to 3800, which is "0" point.
-	dutyr = 3800;	
+	dutyl = HAULT;//reset duty cycles to 3800, which is "0" point.
+	dutyr = HAULT;	
 }
 
 
@@ -973,4 +1002,41 @@ void reset_duty_and_stop_motors(void){
 
 
 *********************************************************************************************************************/
+void check_realsense(void){
+	
+	client = accept(server, (struct sockaddr *) &clientAddr, &addrSize); //(*@\serverBox{3)}@*)
+	printf("New connection from %s\n", inet_ntoa(clientAddr.sin_addr));
+	// now receive 1 byte of data to client, flags=0
+	if(recv(client, &data, 1, 0) == 1) {   printf("%d\n", data);  } //(*@\serverBox{4} + \clientBox{3})@*)
+	close(client); //(*@\clientBox{4)}@*)
+
+	if(data == 1){
+		while(data == 1){
+			reset_duty_and_stop_motors();
+			client = accept(server, (struct sockaddr *) &clientAddr, &addrSize); //(*@\serverBox{3)}@*)
+			printf("New connection from %s\n", inet_ntoa(clientAddr.sin_addr));
+			// now receive 1 byte of data to client, flags=0
+			if(recv(client, &data, 1, 0) == 1) {   printf("%d\n", data);  } //(*@\serverBox{4} + \clientBox{3})@*)
+			close(client); //(*@\clientBox{4)}@*)
+		}
+	}
+	else{
+		
+	}
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

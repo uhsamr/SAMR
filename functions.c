@@ -1,5 +1,6 @@
 #include "functions.h"
 #include "samr_driver.h"
+#include "autonomous.h"
 
 /********************************************************************************************************************/
 unsigned int Average_Reading(unsigned int sensor[], int number_readings){
@@ -28,7 +29,6 @@ Calling this function will make both motors go forward at a safe speed.
 void Forward_Motors(void){
 	WritePWM(PWMl,FORWARD_DUTY);
 	WritePWM(PWMr,FORWARD_DUTY);
-	printf("MOTORS FORWARD\n\n");
 }
 /********************************************************************************************************************/
 unsigned int letter2segment(char letter){

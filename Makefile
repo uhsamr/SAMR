@@ -12,7 +12,7 @@ CC = $(CROSS_COMPILE)gcc
 ARCH= arm
 
 build: $(TARGET)
-$(TARGET): main.o samr_driver.o functions.o
+$(TARGET): main.o samr_driver.o functions.o autonomous.o
 	$(CC) $(LDFLAGS)   $^ -o $@  
 %.o : %.c
 	$(CC) $(CFLAGS) -c $< -o $@

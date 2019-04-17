@@ -36,8 +36,13 @@ int remoteRight(int, int);
 int main() {
 
 
-  int dutyl = 0, dutyr = 0, recvChar, i = 0, ms = 0;
-  
+  int dutyl = 0, dutyr = 0, recvChar;
+  int dutysetForward = 0;
+  int dutysetBack = 0; 
+  int dutysetLeft_leftwheelofthesamrrobotwow = 0;
+  int dutysetLeft_rightwheelofthesamrrobotwow = 0;
+  int dutysetRight_leftwheelofthesamrrobotwow = 0;
+  int dutysetRight_rightwheelofthesamrrobotwow = 0;
   char d;
 
   init();									
@@ -79,148 +84,65 @@ if(recvChar){
 	 switch (d) {				
 	 
 	case 'F': //FORWARD
-			if(dutyl == 3100){
-			dutyl = dutyr;
-			WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor foward
-			WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor foward
-		}
-		
-		else if(dutyl != 3100){
-			
-		dutyl = 3800;
-		dutyr = dutyl;
-		
-			WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor foward
-			WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor foward
-		
-		ms =666/66;
-		usleep(ms*1000);
-		
-		for(i = 0; i < 700; i++){
-			WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor foward
-			WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor foward
-			dutyl = dutyl - 1;
-			dutyr = dutyl;
-		}
-	 
-		 printf("FUCK JAY\n");  //test
-		 WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor foward
-		 WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor foward
-		 
-		 dutyl = 3100;
-		 
-		}
+			dutyl = 3800;
+			dutysetForward = 2800;						//change duty cycle with this value. 
+				if(dutyl == dutysetForward){  				//If F has already been sent, stay at that speed
+					dutyl = dutyr;
+					WritePWM(PWMl, ACTIVATE_PWM + dutyl);   
+					WritePWM(PWMr, ACTIVATE_PWM + dutyr);	
+				}
+				else if(dutyl != dutysetForward){	
+					remoteForward(dutysetForward);
+				}
+			dutyl = dutysetForward;
 	 break;
 		 
 		 
 	 case 'B': //BACK	
-			if(dutyl == 4500){
-			dutyl = dutyr;
-			WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor backward
-			WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor backward
-			
-		}
-		
-		else if (dutyl != 4500){
-		
-		dutyl = 3800;
-		dutyr = dutyl;
-		
-			WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor foward
-			WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor foward
-		
-		ms =666/66;
-		usleep(ms*1000);
-		
-		for(i = 0; i < 700; i++){
-			WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor foward
-			WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor foward
-			dutyl = dutyl + 1;
-			dutyr = dutyl;
-		}
-		
-		
-		 printf("BITCH JAY\n");	//test
-		 WritePWM(PWMl, ACTIVATE_PWM + dutyl);	//Left motor back
-		 WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor back
-		 
-		 dutyl = 4500;
-		 
-		}
+			dutyl = 3800;
+			dutysetBack = 4800;							//change duty cycle with this value.
+				if(dutyl == dutysetBack){					//If B has already been sent, stay at that speed
+					dutyl = dutyr;
+					WritePWM(PWMl, ACTIVATE_PWM + dutyl);   
+					WritePWM(PWMr, ACTIVATE_PWM + dutyr);	
+				}
+				else if (dutyl != dutysetBack){
+					remoteBack(dutysetBack);
+				}
+			dutyl = dutysetBack;
 	 break;
 		 
 		 
 	 case 'L': //LEFT
-			 if(dutyl == 4250){
-			dutyl = 4250;
-			dutyr = 3350;
-			WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor backward
-			WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor backward
-		 }
-		 
-		 else if(dutyl != 4250){
-			 
 			dutyl = 3800;
-			dutyr = dutyl;
-			 
-			WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor foward
-			WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor foward
-		 
-			ms = 666/66;
-			usleep(ms*1000);
-			
-		 for(i = 0; i < 9; i++){
-			 WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor foward
-			 WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor foward
-			 dutyl = dutyl + 50;
-			 dutyr = dutyr - 50;
-		 }
-		 
-		  printf("LOSER JAY\n");  //test
-		  WritePWM(PWMl, ACTIVATE_PWM + dutyl);	//Left motor back
-		  WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor forward
-		  
-		  dutyl = 4250;
-		  dutyr = 3350;
-		 
-		 }
+			dutysetLeft_leftwheelofthesamrrobotwow = 4400;
+			dutysetLeft_rightwheelofthesamrrobotwow = 3200;
+				if(dutyl == dutysetLeft_leftwheelofthesamrrobotwow){
+					dutyl = dutysetLeft_leftwheelofthesamrrobotwow;
+					dutyr = dutysetLeft_rightwheelofthesamrrobotwow;
+					WritePWM(PWMl, ACTIVATE_PWM + dutyl);  
+					WritePWM(PWMr, ACTIVATE_PWM + dutyr);	
+				}
+				else if(dutyl != dutysetLeft_leftwheelofthesamrrobotwow){
+					remoteLeft(dutysetLeft_leftwheelofthesamrrobotwow, dutysetLeft_rightwheelofthesamrrobotwow);
+				}
+			dutyl = dutysetLeft_leftwheelofthesamrrobotwow;
 		 break;
 		 
 		 
 	 case 'R': //RIGHT
-			  if(dutyl == 3350){
-			dutyl = 3350;
-			dutyr = 4250;
-			WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor backward
-			WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor backward
-		 }
-		 
-		 else if(dutyl != 3350){
-			 
-			dutyl = 3800;
-			dutyr = dutyl;
-			 
-			WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor foward
-			WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor foward
-		 
-			ms = 666/66;
-			usleep(ms*1000);
-			
-		 for(i = 0; i < 9; i++){
-			 WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor foward
-			 WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor foward
-			 dutyl = dutyl - 50;
-			 dutyr = dutyr + 50;
-		 }
-		 
-		  printf("RIGHT-WING JAY\n");  //test
-		  WritePWM(PWMl, ACTIVATE_PWM + dutyl);	//Left motor back
-		  WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor forward
-		  
-		  dutyl = 3350;
-		  dutyr = 4250;
-		 
-		 }                  
+			dutyl = 3450;
+			dutysetRight_leftwheelofthesamrrobotwow = 3200;
+			dutysetRight_rightwheelofthesamrrobotwow = 4400;
+				if(dutyl == dutysetRight_leftwheelofthesamrrobotwow){
+					dutyl = dutysetRight_leftwheelofthesamrrobotwow;
+					dutyr = dutysetRight_rightwheelofthesamrrobotwow;
+					WritePWM(PWMl, ACTIVATE_PWM + dutyl);   //Left motor backward
+					WritePWM(PWMr, ACTIVATE_PWM + dutyr);	//Right motor backward
+				}
+				else if(dutyl != dutysetRight_leftwheelofthesamrrobotwow){
+					remoteRight(dutysetRight_leftwheelofthesamrrobotwow, dutysetRight_rightwheelofthesamrrobotwow);
+		 }                                                                                                                                   
 		 break;
 		 
 	 case 'A': 
