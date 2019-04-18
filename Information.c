@@ -1,3 +1,43 @@
+/*****************************************INFORMATION****************************************
+
+- Path for executable on NUC that sends a 1 to the TCPServer running on FPGA:
+C:\\Users\\uhsam\\Desktop\\EthComm\\simple-socket-examples\\TCPClient_human.exe
+
+- Path for executable on NUC that sends a 2 to the TCPServer running on FPGA:
+C:\\Users\\uhsam\\Desktop\\EthComm\\simple-socket-examples\\TCPClient_nohuman.exe
+
+- How to run Intel RealSense Camera and TCPClients on NUC for Ethernet communication with FPGA:
+Run "Examples for Intel RealSense SDK 2.0" --> Solution Explorer --> CV-examples --> dnn -->
+open "rs-dnn.cpp" --> click "Local Windows Debugger"
+
+									PuTTY Connection:
+FPGA
+Serial line: COM3
+Speed: 115200
+Connection type: Serial
+
+FPGA-ssh
+Host Name (or IP address): 192.168.1.123
+Port: 22
+Connection type: SSH
+
+									View FPGA on NUC:
+ Using cable: Run "PuTTY (64-bit)" --> FPGA --> click "Load" --> click "Open"
+ Using Ethernet: Run "PuTTY (64-bit)" --> FPGA-ssh --> click "Load" --> click "Open"
+
+
+							View / Copy / Delete Files on FPGA:
+Open "Swish" --> open FPGA --> Password: FCS15#one
+
+								Access controller for SAMR:
+Open "SAMR_UI"
+
+******************************************INFORMATION****************************************/
+
+
+
+
+
 /* When writing to HEX, LED etc. look at them as bits:
 HEX# = bit-6 bit-5 bit-4 bit-3 bit-2 bit-1 bit-0 = 0000000 to turn them all on or 1111111 to turn them all off, 
 but that is for binary, so we must write a hex number or decimal equivalent to the binary bits we want
