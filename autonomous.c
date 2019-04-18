@@ -265,7 +265,7 @@ it will set flag to 0. Flag is active high.*/
 		else{two = 1;}
 		
 //sensor 3 (left floor)
-		if((sonar3t > 59)){
+		if((sonar3t > 150)){
 			printf("SS 3 triggered: %d [in]\r\n\n",sonar3t);
 			LED = LED + 0x4;
 			ss3t = sonar3t;//save current value in temp to compare to.
@@ -281,7 +281,7 @@ it will set flag to 0. Flag is active high.*/
 		else{four = 1;}
 		
 //sensor 5 (right floor)
-		if((sonar5t > 41)){
+		if((sonar5t > 150)){
 			printf("SS 5 triggered: %d [in]\r\n\n",sonar5t);
 			LED = LED + 0x10;
 			ss5t = sonar5t;//save current value in temp to compare to.
