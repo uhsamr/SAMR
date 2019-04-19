@@ -1,0 +1,239 @@
+<!DOCTYPE=HTML>
+
+<HTML>
+
+<HEAD>
+
+<title>SAMR UI</title>
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+</HEAD>
+
+<BODY>
+
+
+<BLOCKQUOTE>
+
+<div id="HeaderBar">
+
+<P style="color:red">
+<a style="font-size:44px; text-align:center">UH ECE Senior Design Fall 2018 - Spring 2019 <br/> </a> 
+<a style="color:black; font-size:32px; text-align:center"> Team leader: Jaime Juarez <br/> 
+ Group members: Brandon Kain, Matt Metoyer, Matt Anguiano</a>
+</P>
+</div>
+
+<center>
+
+
+
+<HR></HR>
+
+<H2><font color="red" size=+6><b>
+<a>Shasta Advertiser Mobile Robot <br/>
+</a></b>
+</h2>
+
+<P style="color:black; font-size:18px">
+<a href="#bot"> 1. Establish connection to SAMR bluetooth <br/> </a> 
+<a href = "#op" > 2. Choose operating mode <br/> <br/> </a>
+<a style="font-size:14px"> Note: Remote control operates by clicking buttons with mouse OR with 
+  arrow keys on keyboard. Cursor must be placed in text box in order to use arrow keys.</a>
+</P>
+
+&nbsp;
+<input id="myInput" size="36" value="Enable keyboard control by placing cursor here">
+<button id="myBtnL" style="display: none;" onmousedown="setRobot(&quot;L&quot;)" onmouseup="stopRobot();" >LButton</button>
+<button id="myBtnF" style="display: none;" onmousedown="setRobot(&quot;F&quot;)" onmouseup="stopRobot();" >FButton</button>
+<button id="myBtnR" style="display: none;" onmousedown="setRobot(&quot;R&quot;)" onmouseup="stopRobot();" >RButton</button>
+<button id="myBtnB" style="display: none;" onmousedown="setRobot(&quot;B&quot;)" onmouseup="stopRobot();" >BButton</button>
+<button id="myBtnn" style="display: none;" onmouseup="stopRobot();" >nButton</button>
+<button id="myBtnA" style="display: none;" onclick="setRobot(&quot;A&quot;);" >AButton</button>
+
+<script>
+function wait(ms)
+{
+var d = new Date();
+var d2 = null;
+do { d2 = new Date(); }
+while(d2-d < ms);
+}
+</script>
+
+<script>
+
+//maybe
+
+</script>
+
+<script>
+        var input = document.getElementById("myInput");
+		var	oldkeycode;
+        
+        input.addEventListener("keydown", function(event) {
+		
+		
+          if (event.keyCode === 37 ) {
+           event.preventDefault();
+           document.getElementById("myBtnL").onmousedown();
+          }
+
+          if (event.keyCode === 38) {
+           event.preventDefault();
+           document.getElementById("myBtnF").onmousedown();
+          }
+
+          if (event.keyCode === 39) {
+           event.preventDefault();
+           document.getElementById("myBtnR").onmousedown();
+          }
+
+          if (event.keyCode === 40) {
+           event.preventDefault();
+           document.getElementById("myBtnB").onmousedown();
+          }
+		  
+		  oldkeycodedown = event.keycode;
+		  
+        }
+
+        );
+</script>
+
+<script>
+        var input = document.getElementById("myInput");
+        
+        input.addEventListener("keyup", function(event) {
+          if (event.keyCode === 37) {
+           event.preventDefault();
+           document.getElementById("myBtnn").onmouseup();
+          }
+
+          if (event.keyCode === 38) {
+           event.preventDefault();
+           document.getElementById("myBtnn").onmouseup();
+          }
+
+          if (event.keyCode === 39) {
+           event.preventDefault();
+           document.getElementById("myBtnn").onmouseup();
+          }
+
+          if (event.keyCode === 40) {
+           event.preventDefault();
+           document.getElementById("myBtnn").onmouseup();
+          }
+		  
+		  oldkeycodeup = event.keyCode;
+        }
+
+        );
+</script>
+
+
+
+&nbsp;
+
+<P>
+<button onmousedown="setRobot(&quot;F&quot;)" onmouseup="stopRobot();" style="font-size : 32px; width: 60%; height: 80px; color:red;">Forward</button>
+</P>
+
+&nbsp;
+
+<P><button onmousedown="setRobot(&quot;L&quot;)" onmouseup="stopRobot();"  style="font-size : 32px; width: 30%; height: 80px; color:red;">Left</button>
+
+<button onclick="stopRobot();" style="font-size : 32px; width: 30%; height: 80px; color:red;">Stop</button>
+
+<button onmousedown="setRobot(&quot;R&quot;)" onmouseup="stopRobot();"  style="font-size : 32px; width: 30%; height: 80px; color:red;">Right</button></P>
+
+&nbsp;
+
+
+
+<P><button onmousedown="setRobot(&quot;B&quot;)" onmouseup="stopRobot();"  style="font-size : 32px; width: 60%; height: 80px; color:red;">Back</button></P>
+<a name="op">
+&nbsp;<HR width=50%>  </HR>
+
+
+
+&nbsp;
+
+<P><button onclick="setRobot(&quot;A&quot;);"  style="font-size : 40px; width: 90%; height: 80px; color:red;">Autonomous</button></P>
+
+&nbsp;
+
+&nbsp;
+
+<P><button onclick="stopRobot();"  style="font-size : 40px; width: 90%; height: 80px; color:red;">Remote Control</button></P>
+<a name="bot">
+&nbsp;<HR></HR>
+
+<P style ="color:black">
+<a>Establish Bluetooth Connection <br/> <br/> </a>
+<a style="font-size:20px"> Connect to bluetooth device named "SAMR" </a> 
+</P>
+
+
+
+ <center>
+
+<P>
+<button id="connect" style="font-size : 24px; width: 45%; height: 50px;"><font color="GREEN">CONNECT</font></button>
+
+<button id="disconnect" style="font-size : 24px; width: 45%; height: 50px;"><font color="red">DISCONNECT</font></button>
+</P>
+
+<P>
+<textarea ID="terminal" rows="4" cols="45"  value="" style="font-size : 24px;"></textarea>
+</P> 
+
+<form id="send-form" class="send-form">
+
+<P>
+<input id="input" type="text" aria-label="Input" style="font-size : 30px;" size="27" autocomplete="off" placeholder="Type something to send...">
+
+<button type="submit" style="font-size : 30px;" size="25" aria-label="Send">
+
+<i class="material-icons">send</i>
+
+</button>
+
+</form></center>
+
+<P>
+<font size=4><i><a href="#top">Back to Top</a></i></font>
+</P>
+
+<HR></HR>
+
+	
+
+
+
+<P>
+<font size=-1>
+<i>
+<a href="https://compasstech.com.au/index.html"> Website source code by Daniel Loginov <br/>
+ Credit to Dr. Stephen Arnold and Daniel Loginov of Compass Learning Technologies </a>
+ </i></font>
+</P>
+
+
+<script>var matID = "pmprfmnj"</script>
+<script src="https://cdn.geogebra.org/apps/deployggb.js"></script>
+<script src="https://compasstech.com.au/live/learn/js/ggb.js"></script>
+<script src="https://compasstech.com.au/stemjs/js/stemjs.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://compasstech.com.au/live/learn/js/robot.js"></script>
+<script src="https://compasstech.com.au/webble/js/BluetoothTerminal.js"></script>
+<script src="https://compasstech.com.au/webble/js/main.js"></script>
+<script src="https://compasstech.com.au/webble/js/companion.js" data-service-worker="https://compasstech.com.au/webble/sw.js"></script>
+<script src="https://compasstech.com.au/dualble/js/launchpadble.js"></script>
+<script src="https://compasstech.com.au/learn/learn.js"></script>
+
+</BODY>
+
+</HTML>
+

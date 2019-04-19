@@ -32,15 +32,15 @@ int remoteBack(int);
 int remoteLeft(int, int);
 int remoteRight(int, int);
 
-
 int main() {
 
 
-  int dutyl = 0, dutyr = 0, recvChar, i = 0, ms = 0;
-  
-  char d;
+	int dutyl = 0, dutyr = 0, recvChar, i = 0, ms = 0;
 
-  init();									
+	char d;
+
+	init();		
+
 
 
  /****************************************************************************
@@ -69,7 +69,7 @@ Initialize with motors stopped.
   
 
  while (1) {										
-
+	usleep(100*1000);
 	 recvChar = ReadSerial(SER1, &d);	//assign data from RX serial pin to holder 'd'.
 	 
 	 printf("recvChar: %d \n d: %c\n", recvChar, d);   //'d' holds the character sent from device. 
@@ -237,6 +237,7 @@ if(recvChar){
 		 dutyl = HAULT;
 		 dutyr = HAULT;
 		 break;
+		 
 		
 					} //closes switch case
 	 

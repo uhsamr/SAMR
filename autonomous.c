@@ -48,7 +48,6 @@ int                server, j, client;
 socklen_t          addrSize;
 struct sockaddr_in serverAddr, clientAddr;
 char               data;
-
 /********************************************END GLOBAL VARIABLE DECLARATIONS********************************************/
 
 /*************************************************FUNCTION DECLARATIONS*************************************************/
@@ -99,16 +98,11 @@ void check_realsense(void);
  
 /**************************************************START MAIN FUNCTION**************************************************/
 void autonomous(void){
-
-	skip = 0;
-	printf("inside autonomous function\n\n");
-	//init();
-	number_readings = 2;//how many times to read all sensors in array
-	WriteLed(0x0);//turn all LEDs off.		
-	printroscoe();//print rOSCOE on displays
-	Stop_Motors();//start motors at 3,800 (off)
 	
-	//START TCPServer_linux
+#ifndef CAMERAAA
+#define CAMERAAA
+		printf("Set up TCPServer\n\n");
+//START TCPServer_linux
 	memset(&serverAddr, 0, sizeof(serverAddr));//clear socket address
 	serverAddr.sin_family      = AF_INET;      //IPv4 address
 	serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);//don't care network interface
@@ -118,7 +112,17 @@ void autonomous(void){
 	server = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP); //Allocate TCP socket
 	bind(server, (struct sockaddr *) &serverAddr, sizeof(serverAddr)); //(*@\serverBox{1)}@*)
 	listen(server, 5);  //(*@\serverBox{2)}@*)
-	//END TCPServer_linus
+//END TCPServer_linux  
+
+#endif
+
+	skip = 0;
+	printf("inside autonomous function\n\n");
+	//init();
+	number_readings = 2;//how many times to read all sensors in array
+	WriteLed(0x0);//turn all LEDs off.		
+	printroscoe();//print rOSCOE on displays
+	Stop_Motors();//start motors at 3,800 (off)
 	
 	for(;;){
 	
@@ -141,6 +145,7 @@ void autonomous(void){
 
 			
 		while(triggered == true){
+			check_realsense();
 			/*If we made it to here this means sensors were triggered and must stop motors.*/
 			reset_duty_and_stop_motors();
 			
@@ -414,6 +419,7 @@ This means that the robot must take the sensors that were triggered and try avoi
 ********************************************************************************************************************/
 void avoid_objects(void){
 	reset_duty_and_stop_motors();
+	//check_realsense();
 	/*We do not need to worry about the case with ONLY sensor 1 or 7 triggered because of their placement.
 	If only these sensors are triggered the object is not directly in the path of SAMR, if the object comes
 	too into the path of samr then sensors 2 or 6 will also trigger, which will trigger the humancheck flag.*/
@@ -422,7 +428,7 @@ void avoid_objects(void){
 		read_all_sensors_single();
 		check_if_anything_detected();
 		check_serial1();
-		check_realsense();
+		//check_realsense();
 		if(breakcode == true){break;}
 		}//end while
 
@@ -433,7 +439,7 @@ void avoid_objects(void){
 		read_all_sensors_single();//only reads sensors triggered and changes their sonar#t value
 		check_if_anything_detected();//takes new sonar#t value of triggered sensors and updates triggered flags.
 		check_serial1();
-		check_realsense();
+		//check_realsense();
 		if(breakcode == true){break;}
 	}//end while
 	
@@ -448,11 +454,11 @@ it will leave the while loop and reset motors.
 ********************************************************************************************************************/
 void sensor_4_triggered(void){
 	reset_duty_and_stop_motors();
-	
+	//check_realsense();
 	while(four == 0){
 		/*All sensor are being check now, so as long as four is still being triggered it does not matter what other
 		sensor were now triggered it will stay in this loop and only act on the sensor combinations being checked here.*/
-		check_realsense();
+		//check_realsense();
 		if((two == 0) && (six == 0) && (seven == 0)){//line 15
 			turn_left();//starts turning motors left.
 			/*read all sensors again*/
@@ -512,7 +518,7 @@ the way. If only 1 and 7 then go forward to try going between whatever it is, if
 ********************************************************************************************************************/
 void sensor_1_and_7_triggered(void){
 	reset_duty_and_stop_motors();
-	
+	//check_realsense();
 	/*These scenarios will only happen if ss1 and ss7 detected a wall. This is because
 	if the robot detects something on both sides it needs to be careful going between 
 	them or completely turn around and avoid it.*/
@@ -527,7 +533,7 @@ TRIGGERED THE ROBOT WILL STOP AVOIDING. SHOULD I MAKE THE WHILE ABOVE AND IF AND
 WHILE LOOPS SO THE SS1 AND SS7 GIVE US THE SITUATION THE ROBOT IS IN AND THE BELOW STATEMENTS WILL TAKE
 THOSE SENSORS INTO ACCOUNT FOR AVOIDING THE WALL??????
 */
-		check_realsense();
+		//check_realsense();
 		if((two == 0) && (six == 0)){//line 20 Sensor Scenarios for SAMR
 			turn_right();
 			read_all_sensors_single();
@@ -1005,25 +1011,24 @@ void reset_duty_and_stop_motors(void){
 void check_realsense(void){
 	
 	client = accept(server, (struct sockaddr *) &clientAddr, &addrSize); //(*@\serverBox{3)}@*)
-	printf("New connection from %s\n", inet_ntoa(clientAddr.sin_addr));
+	printf("New connection from %s inside check_realsense\n", inet_ntoa(clientAddr.sin_addr));
 	// now receive 1 byte of data to client, flags=0
 	if(recv(client, &data, 1, 0) == 1) {   printf("%d\n", data);  } //(*@\serverBox{4} + \clientBox{3})@*)
 	close(client); //(*@\clientBox{4)}@*)
 
 	if(data == 1){
-		while(data == 1){
+		reset_duty_and_stop_motors();
+		usleep(10000*1000);
+/* 		while(data == 1){
 			reset_duty_and_stop_motors();
 			client = accept(server, (struct sockaddr *) &clientAddr, &addrSize); //(*@\serverBox{3)}@*)
-			printf("New connection from %s\n", inet_ntoa(clientAddr.sin_addr));
+			printf("New connection from %s inside while loop\n", inet_ntoa(clientAddr.sin_addr));
 			// now receive 1 byte of data to client, flags=0
 			if(recv(client, &data, 1, 0) == 1) {   printf("%d\n", data);  } //(*@\serverBox{4} + \clientBox{3})@*)
 			close(client); //(*@\clientBox{4)}@*)
-		}
+		} */
 	}
-	else{
-		
-	}
-	
+	else{}
 }
 
 
